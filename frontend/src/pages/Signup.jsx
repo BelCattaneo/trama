@@ -4,6 +4,7 @@ import Button from "../components/Button";
 import Input from "../components/Input";
 import NavBarPublic from "../components/NavBarPublic";
 import RolePicker from "../components/RolePicker";
+import { useAuth } from "../contexts/AuthContext";
 import { formatCuit, isValidCuitFormat } from "../lib/cuit";
 import "./Signup.css";
 
@@ -23,6 +24,7 @@ const INITIAL = {
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { refresh } = useAuth();
   const [form, setForm] = useState(INITIAL);
   const [errors, setErrors] = useState({});
   const [needsCoords, setNeedsCoords] = useState(false);
@@ -77,10 +79,12 @@ export default function Signup() {
     try {
       const response = await fetch("/api/auth/signup", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (response.ok) {
+        await refresh();
         navigate("/upload");
         return;
       }

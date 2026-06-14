@@ -101,4 +101,11 @@ def set_session_cookie(response: Response, session_id: str) -> None:
 
 
 def clear_session_cookie(response: Response) -> None:
-    response.delete_cookie(COOKIE_NAME)
+    # delete_cookie must mirror set_cookie's attributes or browsers may not match
+    # the cookie and the deletion silently no-ops.
+    response.delete_cookie(
+        COOKIE_NAME,
+        httponly=True,
+        secure=settings.cookie_secure,
+        samesite="lax",
+    )

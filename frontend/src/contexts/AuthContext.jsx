@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 const AuthContext = createContext(null);
 
@@ -6,41 +12,40 @@ export function AuthProvider({ children, initialUser = undefined }) {
   const [user, setUser] = useState(initialUser);
   const [loading, setLoading] = useState(initialUser === undefined);
 
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/me", { credentials: "include" });
+      if (response.ok) {
+        setUser(await response.json());
+      } else {
+        setUser(null);
+      }
+    } catch {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (initialUser !== undefined) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const response = await fetch("/api/me", { credentials: "include" });
-        if (!cancelled) {
-          if (response.ok) {
-            const body = await response.json();
-            setUser(body);
-          } else {
-            setUser(null);
-          }
-        }
-      } catch {
-        if (!cancelled) setUser(null);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [initialUser]);
+    refresh();
+  }, [initialUser, refresh]);
 
   async function logout() {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
-    setUser(null);
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } finally {
+      setUser(null);
+    }
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, setUser, logout }}>
+    <AuthContext.Provider value={{ user, loading, setUser, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );
