@@ -6,7 +6,7 @@ import NavBarAuth from "./NavBarAuth";
 
 const USER = {
   user: { id: "u", email: "demo@example.com", full_name: "Demo" },
-  node: { id: "n" },
+  node: { id: "n", display_name: "Cooperativa Demo" },
 };
 
 function renderNav() {
@@ -31,15 +31,15 @@ afterEach(() => {
 });
 
 describe("NavBarAuth", () => {
-  it("shows the logged-in user's name", () => {
+  it("shows the node display name", () => {
     renderNav();
-    expect(screen.getByText(/demo/i)).toBeInTheDocument();
+    expect(screen.getByText(/cooperativa demo/i)).toBeInTheDocument();
   });
 
   it("calls /api/auth/logout and navigates to /login when the logout button is clicked", async () => {
     global.fetch.mockResolvedValue({ ok: true, status: 204 });
     renderNav();
-    fireEvent.click(screen.getByRole("button", { name: /cerrar sesión/i }));
+    fireEvent.click(screen.getByRole("button", { name: /salir/i }));
     await waitFor(() =>
       expect(screen.getByText(/login screen/i)).toBeInTheDocument(),
     );

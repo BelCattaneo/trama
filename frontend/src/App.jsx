@@ -3,6 +3,8 @@ import RedirectIfAuthed from "./components/RedirectIfAuthed";
 import RequireAuth from "./components/RequireAuth";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import MisDocumentos from "./pages/MisDocumentos";
+import MisPedidos from "./pages/MisPedidos";
 import Signup from "./pages/Signup";
 import Upload from "./pages/Upload";
 
@@ -31,6 +33,22 @@ export default function App() {
         element={
           <RequireAuth>
             <Upload />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/mis-documentos"
+        element={
+          <RequireAuth>
+            <MisDocumentos />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/mis-pedidos"
+        element={
+          <RequireAuth>
+            <MisPedidos />
           </RequireAuth>
         }
       />
