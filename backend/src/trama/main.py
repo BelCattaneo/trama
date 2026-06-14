@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 
 from trama.config import settings
 from trama.db import close_pool, db_ok, open_pool
-from trama.logging import configure_logging
+from trama.log import configure_logging
 
 
 @asynccontextmanager
