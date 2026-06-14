@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -47,6 +47,18 @@ def detect_mime(data: bytes) -> str | None:
     return None
 
 
+def _validate_upload(contents: bytes) -> str:
+    size = len(contents)
+    if size == 0:
+        raise HTTPException(status_code=400, detail="archivo vacío")
+    if size > MAX_BYTES:
+        raise HTTPException(status_code=400, detail="archivo demasiado grande")
+    mime = detect_mime(contents)
+    if mime is None:
+        raise HTTPException(status_code=400, detail="formato no soportado")
+    return mime
+
+
 router = APIRouter(prefix="/api")
 
 
@@ -57,18 +69,7 @@ async def upload_document(
     user: Annotated[AuthUser, Depends(require_user)],
 ):
     contents = await file.read()
-    size = len(contents)
-    if size == 0:
-        return JSONResponse({"error": "archivo vacío"}, status_code=400)
-    if size > MAX_BYTES:
-        return JSONResponse(
-            {"error": "archivo demasiado grande"}, status_code=400
-        )
-
-    mime = detect_mime(contents)
-    if mime is None:
-        return JSONResponse({"error": "formato no soportado"}, status_code=400)
-
+    mime = _validate_upload(contents)
     content_hash = hashlib.sha256(contents).hexdigest()
     storage: Storage = request.app.state.storage
     storage_ref = storage.save(contents, content_hash)
@@ -84,7 +85,7 @@ async def upload_document(
                     user.node_id,
                     file.filename,
                     mime,
-                    size,
+                    len(contents),
                     content_hash,
                     storage_ref,
                 ),
@@ -95,7 +96,7 @@ async def upload_document(
         id=doc_id,
         original_filename=file.filename,
         mime_type=mime,
-        size_bytes=size,
+        size_bytes=len(contents),
         content_hash=content_hash,
         uploaded_at=uploaded_at,
     )

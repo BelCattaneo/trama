@@ -14,7 +14,13 @@ from trama.storage import LocalStorage
 
 @pytest.fixture(autouse=True, scope="session")
 def _isolated_storage(tmp_path_factory):
+    original = getattr(app.state, "storage", None)
     app.state.storage = LocalStorage(tmp_path_factory.mktemp("storage"))
+    yield
+    if original is None:
+        del app.state.storage
+    else:
+        app.state.storage = original
 
 
 @pytest_asyncio.fixture
