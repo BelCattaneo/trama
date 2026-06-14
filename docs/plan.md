@@ -154,7 +154,79 @@ Each AC answers: "what can I (the user) do once this epic is closed?" — indepe
 
 ## Phase 2 — Tickets per epic
 
-_To be written. Format: GitHub Issues, one per ticket, labelled by epic. Each ticket has acceptance criteria, dependencies, and effort estimate (XS / S / M / L)._
+**E1 and E2 — detailed tickets live as GitHub Issues** (#1–#17), labelled by epic + stream + milestone `MVP`. Browse:
+
+- All MVP issues: [`is:issue milestone:MVP`](https://github.com/BelCattaneo/trama/issues?q=is%3Aissue+milestone%3AMVP)
+- E1 only: [`label:epic-1`](https://github.com/BelCattaneo/trama/issues?q=is%3Aissue+label%3Aepic-1)
+- E2 only: [`label:epic-2`](https://github.com/BelCattaneo/trama/issues?q=is%3Aissue+label%3Aepic-2)
+- Backend stream: [`label:stream-a`](https://github.com/BelCattaneo/trama/issues?q=is%3Aissue+label%3Astream-a)
+- Frontend stream: [`label:stream-b`](https://github.com/BelCattaneo/trama/issues?q=is%3Aissue+label%3Astream-b)
+
+**E3–E8 — sketches.** Each ticket below will be deepened (AC + Notes + deps) when the epic comes up next. Format is brief on purpose so we don't lock decisions too early.
+
+### E3 — Document upload & storage  *(sketched)*
+
+- **E3.1** `document` table + migration. FK to Node, `mime_type`, `content_hash` UNIQUE, `storage_ref`, `uploaded_at`. *(Stream A)*
+- **E3.2** Upload endpoint `POST /api/documents`. Multipart, validates format (xlsx/csv/jpg/png/pdf) + size (≤10MB), hashes content, dedup by hash, persists. *(Stream A)*
+- **E3.3** Local FS storage abstraction. Files saved under `STORAGE_PATH/<hash>`. Future-swappable for S3. *(Stream A)*
+- **E3.4** List user docs endpoint `GET /api/documents`. *(Stream A)*
+- **E3.5** Upload UI. Drag/drop + file picker. Client-side format/size validation. *(Stream B)*
+- **E3.6** "My documents" list. Shows uploaded files, links into the review screen (E6). *(Stream B)*
+
+### E4 — Deterministic parsing (xlsx/csv)  *(sketched)*
+
+- **E4.1** `parse_attempt` table + migration. `document_id`, `strategy` (`'deterministic'`/`'llm'`), `confidence`, `payload` jsonb, `prompt_version` (nullable), `created_at`. *(Stream A)*
+- **E4.2** Canonical `ParsePayload` Pydantic schema. Defines the shape every parser must produce: `lines: [{product, quantity, unit, raw_text?}]`. *(Stream A/C — contract)*
+- **E4.3** Column-mapping config. Synonyms like `producto`/`item`, `cantidad`/`qty`, etc. mapped to canonical fields. *(Stream C)*
+- **E4.4** xlsx parser. Reads with `openpyxl`, applies E4.3 mapping, outputs `ParsePayload`. *(Stream C, pure)*
+- **E4.5** csv parser. Reads with stdlib `csv`, same shape as E4.4. *(Stream C, pure)*
+- **E4.6** Parse orchestrator. After upload, dispatches by `mime_type`, persists `ParseAttempt`. *(Stream A — integration)*
+
+### E5 — LLM parsing (photo)  *(sketched)*
+
+- **E5.1** LLM provider choice + async client wrapper. **Decision pending**: Anthropic Claude / OpenAI GPT-4o / other. With retries + timeout. *(Stream A/C)*
+- **E5.2** Prompt template + versioning. Prompt stored under `backend/prompts/v1_extraction.txt`. `prompt_version` persisted with every `ParseAttempt`. *(Stream A/C)*
+- **E5.3** Image preprocessing. PDF → page images, resize for token limits, base64 encode. *(Stream C, pure)*
+- **E5.4** LLM parse orchestrator integration. Extends E4.6 to route photo/pdf to LLM strategy. *(Stream A — integration)*
+- **E5.5** Fixture-based tests. Golden-file approach with sample images + expected payloads, allowing some tolerance. *(Stream C)*
+
+### E6 — Validation & confirmation  *(sketched)*
+
+- **E6.1** `operation`, `operation_line`, `correction` tables + migration. Columns per `docs/plan.md` Phase 3 (to lock when we get here). *(Stream A)*
+- **E6.2** Review screen. Renders parsed lines from `ParseAttempt.payload`. Inline per-field editing. *(Stream B)*
+- **E6.3** Add / remove line UI. User can add lines the parser missed and delete false lines. *(Stream B)*
+- **E6.4** Confirmation endpoint `POST /api/operations`. Persists `Operation` + `OperationLine`s + a `Correction` per edited field. *(Stream A)*
+- **E6.5** Correction diff logic. Computes corrections between original `ParseAttempt.payload` and the user-confirmed payload. *(Stream A)*
+- **E6.6** Hand-off orchestration. After parse completes → review screen; after confirm → my-orders. *(Stream A + B)*
+
+### E7 — My orders  *(sketched)*
+
+- **E7.1** `GET /api/operations`. Lists confirmed Operations for the logged-in Node. *(Stream A)*
+- **E7.2** `GET /api/operations/:id`. Operation detail + lines. *(Stream A)*
+- **E7.3** My orders list UI. *(Stream B)*
+- **E7.4** Order detail UI. *(Stream B)*
+- **E7.5** CSV download for an Operation. *(Stream B, bonus)*
+
+### E8 — Map view  *(post-MVP, sketched)*
+
+- **E8.1** `GET /api/nodes/public`. Returns Nodes with public-safe fields only (no email, no password hash). *(Stream A)*
+- **E8.2** Leaflet integration. OSM standard tile layer. *(Stream B)*
+- **E8.3** Marker rendering. One marker per Node at `latitude`/`longitude`. Color by role. Popup on click. *(Stream B)*
+- **E8.4** Role filter UI. Show/hide producers / consumers / both. *(Stream B)*
+
+### Backlog totals
+
+| Epic | Tickets | Status |
+|---|---:|---|
+| E1 | 7 | Issues #1–#7 |
+| E2 | 10 | Issues #8–#17 |
+| E3 | 6 | sketched |
+| E4 | 6 | sketched |
+| E5 | 5 | sketched |
+| E6 | 6 | sketched |
+| E7 | 5 | sketched |
+| E8 (post-MVP) | 4 | sketched |
+| **Total** | **49** | |
 
 ---
 
