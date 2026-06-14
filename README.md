@@ -10,7 +10,7 @@ Early development. No public deployment yet.
 
 ## Stack
 
-- Backend: Python + FastAPI + SQLAlchemy + SQLite, managed with [`uv`](https://docs.astral.sh/uv/)
+- Backend: Python + FastAPI + PostgreSQL (via `psycopg` v3) + Pydantic, managed with [`uv`](https://docs.astral.sh/uv/)
 - Frontend: React + Vite (JavaScript)
 
 ## Repository layout

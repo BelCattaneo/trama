@@ -24,7 +24,7 @@ These sit above every other rule.
 
 ## Stack
 
-- **Backend**: Python + FastAPI + SQLAlchemy + SQLite
+- **Backend**: Python + FastAPI + PostgreSQL (via `psycopg` v3) + Pydantic
 - **Frontend**: React + Vite (JavaScript, no TypeScript for now)
 - **Python package manager**: `uv` — **never** `pip`, `pip-tools`, `poetry`, or `conda`
 - **JS package manager**: `npm`
@@ -177,11 +177,11 @@ Even before there's a Dockerfile, **write code as if it will be deployed**:
 - **No absolute local paths.** Use relative or configurable paths.
 - **Structured logging** (no `print()` except for one-off debugging).
 - **Healthcheck endpoint** (`GET /health`) from early on.
-- **Versioned DB migrations** (Alembic) as soon as the schema stops changing daily.
+- **Versioned DB migrations**: sequential numbered SQL files in `backend/migrations/` (e.g. `001_init.sql`, `002_add_geohash.sql`) once the schema stops changing daily.
 - **Separate file reading from request handling** (move to async processing once it grows).
 - **Frontend builds to static assets** (`npm run build`) servable by any reverse proxy.
 
-When the time comes: Docker (backend + frontend + sqlite-volume) + `docker-compose.yml`. But do not add Docker before there's something to dockerize.
+When the time comes: `docker-compose.yml` with three services — backend, frontend, and PostgreSQL with a named volume for data. Local development may start using `docker-compose up postgres` earlier than the rest, since Postgres isn't trivial to run otherwise.
 
 ---
 
