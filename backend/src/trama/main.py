@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from trama.auth_routes import router as auth_router
 from trama.config import settings
 from trama.db import close_pool, db_ok, open_pool
+from trama.document_routes import router as document_router
 from trama.log import configure_logging
 from trama.storage import LocalStorage
 from trama.user_routes import router as user_router
@@ -38,6 +39,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(user_router)
+app.include_router(document_router)
 
 
 @app.get("/")
