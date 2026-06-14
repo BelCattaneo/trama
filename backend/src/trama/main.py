@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 
 from trama.config import settings
 from trama.db import close_pool, db_ok, open_pool
-from trama.logging import configure_logging
+from trama.log import configure_logging
 
 
 @asynccontextmanager
@@ -23,10 +23,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="trama", lifespan=lifespan)
 
-cors_origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
+allowed_origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

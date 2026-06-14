@@ -4,7 +4,8 @@ import structlog
 
 
 def configure_logging(level: str) -> None:
-    logging.basicConfig(format="%(message)s", level=level.upper())
+    level_name = level.upper()
+    logging.basicConfig(format="%(message)s", level=level_name)
     structlog.configure(
         processors=[
             structlog.contextvars.merge_contextvars,
@@ -13,7 +14,7 @@ def configure_logging(level: str) -> None:
             structlog.processors.JSONRenderer(),
         ],
         wrapper_class=structlog.make_filtering_bound_logger(
-            logging.getLevelNamesMapping()[level.upper()]
+            logging.getLevelNamesMapping()[level_name]
         ),
         cache_logger_on_first_use=True,
     )
