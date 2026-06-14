@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import "./NavBarPublic.css";
 
-export default function NavBarPublic() {
+export default function NavBarPublic({ hideLoginLink = false }) {
   return (
     <nav className="nav-public">
       <div className="nav-public__left">
@@ -10,9 +10,11 @@ export default function NavBarPublic() {
         </Link>
       </div>
       <div className="nav-public__right">
-        <Link to="/login" className="nav-public__link">
-          Iniciar sesión
-        </Link>
+        {!hideLoginLink && (
+          <Link to="/login" className="nav-public__link">
+            Iniciar sesión
+          </Link>
+        )}
         <Link to="/signup" className="nav-public__cta">
           Crear cuenta
         </Link>

@@ -1,3 +1,80 @@
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import Button from "../components/Button";
+import Input from "../components/Input";
+import NavBarPublic from "../components/NavBarPublic";
+import "./Login.css";
+
 export default function Login() {
-  return <h2>Iniciar sesión</h2>;
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function onSubmit(event) {
+    event.preventDefault();
+    if (!email || !password) {
+      setError("Completá email y contraseña");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (response.ok) {
+        navigate("/upload");
+        return;
+      }
+      setError("Credenciales inválidas");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="login-page">
+      <NavBarPublic hideLoginLink />
+      <main className="login-page__content">
+        <form className="login-page__card" onSubmit={onSubmit} noValidate>
+          <h1 className="login-page__title">Iniciá sesión</h1>
+          <Input
+            label="Email"
+            id="login-email"
+            type="email"
+            placeholder="tu@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <Input
+            label="Contraseña"
+            id="login-password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          {error && <p className="login-page__error">{error}</p>}
+          <Button
+            type="submit"
+            variant="primary"
+            fullWidth
+            loading={submitting}
+          >
+            Iniciar sesión
+          </Button>
+          <p className="login-page__signup-prompt">
+            ¿No tenés cuenta?{" "}
+            <Link to="/signup" className="login-page__signup-link">
+              Registrate
+            </Link>
+          </p>
+        </form>
+      </main>
+    </div>
+  );
 }
