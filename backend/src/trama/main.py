@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from trama.auth_routes import router as auth_router
 from trama.config import settings
 from trama.db import close_pool, db_ok, open_pool
 from trama.log import configure_logging
@@ -33,6 +34,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router)
 app.include_router(user_router)
 
 
