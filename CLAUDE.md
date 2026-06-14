@@ -154,7 +154,7 @@ If a proposal pushes toward any of these, **discuss it explicitly before coding*
 ## Commits
 
 ### Messages
-- Lowercase, no colons, no `feat:`/`fix:` prefixes.
+- Lowercase, no colons anywhere in the message (title or body), no `feat:`/`fix:` prefixes.
 - Imperative: `add xlsx parser`, not `added` or `adding`.
 - Describe the change, not the process (`add unit normalization`, not `as you asked, added…`).
 - No `WIP`, `checkpoint`, `fix previous typo`, `review fix`. If "and", "also", or "+" appears in the title, that commit is two.
