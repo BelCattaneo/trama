@@ -67,10 +67,24 @@ describe("Signup", () => {
     expect(await screen.findAllByText(/campo requerido/i)).toHaveLength(5);
   });
 
-  it("shows CUIT format error for invalid CUIT", () => {
+  it("strips non-digits from the CUIT input as the user types", () => {
+    renderSignup();
+    const input = screen.getByLabelText(/^CUIT$/i);
+    fireEvent.change(input, { target: { value: "abc20-12def345678!6" } });
+    expect(input.value).toBe("20-12345678-6");
+  });
+
+  it("auto-formats the CUIT with dashes as the user types", () => {
+    renderSignup();
+    const input = screen.getByLabelText(/^CUIT$/i);
+    fireEvent.change(input, { target: { value: "20123456786" } });
+    expect(input.value).toBe("20-12345678-6");
+  });
+
+  it("shows CUIT format error for incomplete CUIT", () => {
     renderSignup();
     fireEvent.change(screen.getByLabelText(/^CUIT$/i), {
-      target: { value: "abc" },
+      target: { value: "12345" },
     });
     fireEvent.click(screen.getByRole("button", { name: /crear cuenta/i }));
     expect(
