@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider } from "../contexts/AuthContext";
-import MisDocumentos from "./MisDocumentos";
+import DocumentsList from "./DocumentsList";
 
 const USER = {
   user: { id: "u", email: "demo@example.com", full_name: "Demo" },
@@ -14,7 +14,7 @@ function renderPage() {
     <MemoryRouter initialEntries={["/mis-documentos"]}>
       <AuthProvider initialUser={USER}>
         <Routes>
-          <Route path="/mis-documentos" element={<MisDocumentos />} />
+          <Route path="/mis-documentos" element={<DocumentsList />} />
           <Route path="/upload" element={<div>upload page</div>} />
         </Routes>
       </AuthProvider>
@@ -30,7 +30,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("MisDocumentos", () => {
+describe("DocumentsList", () => {
   it("shows loading state while fetching", () => {
     global.fetch.mockImplementation(() => new Promise(() => {}));
     renderPage();

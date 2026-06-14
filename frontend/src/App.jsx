@@ -3,8 +3,8 @@ import RedirectIfAuthed from "./components/RedirectIfAuthed";
 import RequireAuth from "./components/RequireAuth";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
-import MisDocumentos from "./pages/MisDocumentos";
-import MisPedidos from "./pages/MisPedidos";
+import DocumentsList from "./pages/DocumentsList";
+import OrdersList from "./pages/OrdersList";
 import Signup from "./pages/Signup";
 import Upload from "./pages/Upload";
 
@@ -40,7 +40,7 @@ export default function App() {
         path="/mis-documentos"
         element={
           <RequireAuth>
-            <MisDocumentos />
+            <DocumentsList />
           </RequireAuth>
         }
       />
@@ -48,7 +48,7 @@ export default function App() {
         path="/mis-pedidos"
         element={
           <RequireAuth>
-            <MisPedidos />
+            <OrdersList />
           </RequireAuth>
         }
       />
