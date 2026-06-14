@@ -243,7 +243,7 @@ Partial. `Node` and `User` locked. Other entities defined as they're tackled.
 | Entity | Purpose |
 |---|---|
 | `Node` | Participant (consumer, producer, or both). Identified by CUIT. |
-| `User` | Person who logs in. Belongs to one Node. Schema 1:N; MVP UI enforces 1:1. |
+| `User` | Person who logs in. Belongs to one Node. Schema 1:N; MVP UI enforces 1:1. Stored in table `app_user` (the word `user` is reserved in PostgreSQL). |
 | `Document` | Raw uploaded file (xlsx/csv/photo). Belongs to a Node. |
 | `ParseAttempt` | Result of parsing a Document. Strategy = deterministic or LLM. |
 | `Operation` | Confirmed commercial event (order; future: offer). Belongs to a Node. |
@@ -271,12 +271,14 @@ INDEX (cuit)
 INDEX (role)
 ```
 
-### `User`
+### `User` (table: `app_user`)
+
+The entity is `User`. The SQL table is named `app_user` because `user` is a reserved keyword in PostgreSQL; using it unquoted breaks queries and quoting it everywhere is noise. The Python / Pydantic layer keeps the name `User`.
 
 ```sql
-User
+app_user
   id              uuid             PK, server-generated
-  node_id         uuid             NOT NULL REFERENCES Node(id) ON DELETE RESTRICT
+  node_id         uuid             NOT NULL REFERENCES node(id) ON DELETE RESTRICT
   email           varchar(254)     UNIQUE, NOT NULL
   password_hash   varchar(255)     NOT NULL                  -- bcrypt via passlib
   full_name       varchar(120)     NULL
