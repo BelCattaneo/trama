@@ -17,23 +17,32 @@ Early development. No public deployment yet.
 
 ```
 trama/
-├── backend/    # FastAPI service
-├── frontend/   # React + Vite UI
-├── CLAUDE.md   # Project rules for the AI assistant
+├── backend/             # FastAPI service
+├── frontend/            # React + Vite UI
+├── docs/                # plan and design notes
+├── docker-compose.yml   # local Postgres
+├── CLAUDE.md            # project rules
 └── README.md
 ```
 
 ## Getting started
 
-Setup instructions will land here as the project grows.
+Requirements: Python 3.12+, [`uv`](https://docs.astral.sh/uv/), Node 20+, Docker.
 
 ```bash
-# backend
-cd backend
-uv run uvicorn ...
+cp .env.example .env
 
-# frontend
+# Postgres on 127.0.0.1:5432
+docker compose up -d postgres
+
+# Backend on :8000
+cd backend
+uv sync
+uv run uvicorn trama.main:app --reload
+
+# Frontend on :5173 (separate terminal)
 cd frontend
+npm install
 npm run dev
 ```
 
