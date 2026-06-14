@@ -17,10 +17,10 @@ describe("App routes", () => {
     expect(screen.getByRole("heading", { name: /trama/i })).toBeInTheDocument();
   });
 
-  it("renders the signup placeholder on /signup", () => {
+  it("renders the signup page on /signup", () => {
     renderAt("/signup");
     expect(
-      screen.getByRole("heading", { name: /crear cuenta/i }),
+      screen.getByRole("heading", { name: /creá tu cuenta/i }),
     ).toBeInTheDocument();
   });
 
