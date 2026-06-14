@@ -46,11 +46,16 @@ These sit above every other rule.
 
 ## Privacy (non-negotiable)
 
+The MVP accepts only personas jurídicas (legal entities — mutuals, cooperatives, organizations). Privacy rules distinguish between legal entities and natural persons:
+
+- **Legal entities** have semi-public identity and location. CUIT, latitude/longitude, and similar identifiers may be stored plainly. No hashing required.
+- **Personas físicas** (out of scope for this MVP, but the constraints stand): hash or don't store identifying data. Location only at zone-level geohash.
+
+Universal rules:
+
 - **NEVER sell data to third parties.** Period.
 - **NEVER expose personal data in logs, public endpoints, or error responses.**
-- Personal data (full name, ID number, phone, exact address): **hash or don't store**. Default = don't store.
-- Location: use **geohash** with limited precision (zone, not exact point). Never raw `lat`/`lon` in the public schema.
-- Monetary data (`amount_money`, individual prices): **null by default**, explicit opt-in from the collective required.
+- Monetary data (`amount_money`, individual prices): null by default, explicit opt-in from the collective required.
 - Any new feature that touches PII requires rethinking the model before coding.
 
 ---
