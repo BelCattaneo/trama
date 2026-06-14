@@ -12,9 +12,11 @@ function renderAt(path) {
 }
 
 describe("App routes", () => {
-  it("renders trama heading on /", () => {
+  it("renders the landing headline on /", () => {
     renderAt("/");
-    expect(screen.getByRole("heading", { name: /trama/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /la red que conecta/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders the signup page on /signup", () => {
