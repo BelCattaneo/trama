@@ -10,12 +10,16 @@ function renderUpload() {
       <AuthProvider
         initialUser={{
           user: { id: "u", email: "demo@example.com", full_name: "Demo" },
-          node: { id: "n", display_name: "Cooperativa Demo" },
+          node: {
+            id: "n",
+            display_name: "Cooperativa Demo",
+            role: "consumer",
+          },
         }}
       >
         <Routes>
           <Route path="/upload" element={<Upload />} />
-          <Route path="/mis-documentos" element={<div>mis documentos</div>} />
+          <Route path="/documents" element={<div>documents page</div>} />
         </Routes>
       </AuthProvider>
     </MemoryRouter>,
@@ -66,9 +70,7 @@ describe("Upload", () => {
     const input = screen.getByLabelText(/seleccionar archivo/i);
     const file = makeFile("big.pdf", 11 * 1024 * 1024, "application/pdf");
     fireEvent.change(input, { target: { files: [file] } });
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      /muy grande.*10 mb/i,
-    );
+    expect(screen.getByRole("alert")).toHaveTextContent(/muy grande.*10 mb/i);
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
@@ -81,7 +83,7 @@ describe("Upload", () => {
     expect(drop.className).not.toMatch(/upload-page__drop--active/);
   });
 
-  it("navigates to /mis-documentos on 201", async () => {
+  it("navigates to /documents on 201", async () => {
     global.fetch.mockResolvedValue({
       status: 201,
       ok: true,
@@ -92,7 +94,7 @@ describe("Upload", () => {
     const file = makeFile("pedido.pdf", 1024, "application/pdf");
     fireEvent.change(input, { target: { files: [file] } });
     await waitFor(() => {
-      expect(screen.getByText(/mis documentos/i)).toBeInTheDocument();
+      expect(screen.getByText(/documents page/i)).toBeInTheDocument();
     });
     expect(global.fetch).toHaveBeenCalledWith(
       "/api/documents",

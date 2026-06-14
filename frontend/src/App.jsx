@@ -37,7 +37,7 @@ export default function App() {
         }
       />
       <Route
-        path="/mis-documentos"
+        path="/documents"
         element={
           <RequireAuth>
             <DocumentsList />
@@ -45,7 +45,7 @@ export default function App() {
         }
       />
       <Route
-        path="/mis-pedidos"
+        path="/operations"
         element={
           <RequireAuth>
             <OrdersList />

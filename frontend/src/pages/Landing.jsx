@@ -15,8 +15,9 @@ export default function Landing() {
           quien lo necesita
         </h1>
         <p className="landing-page__description">
-          Subí tu lista de pedidos — una planilla, una foto, lo que tengas.
-          Trama la interpreta, la ordena, y vos confirmás. Sin vueltas.
+          Subí tu lista de pedidos: una planilla, una foto, lo que tengas.
+          <br />
+          Trama la interpreta, la ordena y vos confirmás. Sin vueltas.
         </p>
         <div className="landing-page__ctas">
           <Link

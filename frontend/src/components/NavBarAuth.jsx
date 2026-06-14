@@ -1,12 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { operationLabels } from "../lib/roleLabels";
 import "./NavBarAuth.css";
-
-const NAV_LINKS = [
-  { to: "/upload", label: "Subir pedido" },
-  { to: "/mis-documentos", label: "Mis documentos" },
-  { to: "/mis-pedidos", label: "Mis pedidos" },
-];
 
 export default function NavBarAuth() {
   const { user, logout } = useAuth();
@@ -18,6 +13,12 @@ export default function NavBarAuth() {
   }
 
   const nodeName = user?.node?.display_name;
+  const labels = operationLabels(user?.node?.role);
+  const navLinks = [
+    { to: "/upload", label: labels.action },
+    { to: "/documents", label: "Mis documentos" },
+    { to: "/operations", label: labels.nav },
+  ];
 
   return (
     <nav className="nav-auth">
@@ -26,7 +27,7 @@ export default function NavBarAuth() {
           trama
         </Link>
         <ul className="nav-auth__links">
-          {NAV_LINKS.map((link) => (
+          {navLinks.map((link) => (
             <li key={link.to}>
               <NavLink
                 to={link.to}

@@ -1,7 +1,7 @@
 # Continuous integration for trama.
 # Runs on every push to main and every pull request.
 # Two jobs in parallel: backend (Python + Postgres) and frontend (Node).
-name: ci
+name: CI
 
 on:
   push:
