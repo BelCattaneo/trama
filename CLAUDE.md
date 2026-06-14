@@ -205,7 +205,10 @@ When the time comes: `docker-compose.yml` with three services — backend, front
 
 ## Workflow
 
-- `main` is the development branch (solo project; no need for feature branches yet).
+- **Branch per ticket → PR → merge into `main` → close issue.** No direct commits to `main`.
+- Branch name: `ticket-<N>-<short-slug>` (e.g. `ticket-50-makefile`). One ticket per branch.
+- Open the PR with `gh pr create`. Title mirrors the eventual merge commit and ends with `(#N)`. PR body documents the verification: AC by AC, command run, output observed.
+- Self-merge after verification is recorded on the PR. No branch protection — the discipline lives in the PR body, not in policy.
 - Before structural changes (new model entity, cross-cutting refactor, new deps): **short plan in conversation before touching code.**
 
 ### Tickets are contracts — always
@@ -214,7 +217,7 @@ When the time comes: `docker-compose.yml` with three services — backend, front
 - Run the AC commands end-to-end (curl, ruff, npm build, etc.). "It compiles" is not "it works". "The agent reported done" is not "I verified done".
 - If the implementation diverged from the ticket — extra behavior, missing behavior, renamed thing, changed scope — **update the ticket first** (`gh issue edit`), then commit. Never let code and ticket drift silently.
 - Applies equally to code produced by subagents: re-check the AC yourself before commit, do not trust the agent's "done" summary at face value.
-- **Close manually, not via commit keywords.** Commits use `(#N)` for backref only. Never use `closes #N` / `fixes #N` / `resolves #N` — those auto-close on push and bypass the human verification step. After the commit lands on main and the AC is verified there, close with `gh issue close <N> --comment "<what was verified>"`. The close gesture is the signal that a human checked, not an automation side-effect.
+- **Close manually, not via commit or PR keywords.** Commit titles and PR titles use `(#N)` for backref only. Never use `closes #N` / `fixes #N` / `resolves #N` in commits, PR titles, or PR bodies — those auto-close on merge and bypass the human verification step. After the PR merges and the AC is re-confirmed on main, close with `gh issue close <N> --comment "<what was verified>"`. The close gesture is the signal that a human checked, not an automation side-effect.
 
 ---
 
