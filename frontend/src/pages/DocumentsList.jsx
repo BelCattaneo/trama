@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FileText, Loader } from "lucide-react";
 import NavBarAuth from "../components/NavBarAuth";
+import { useAuth } from "../contexts/AuthContext";
 import { apiGet } from "../lib/api";
+import { operationLabels } from "../lib/roleLabels";
 import "./DocumentsList.css";
 
 const MIME_LABELS = {
@@ -21,6 +23,8 @@ const dateFormatter = new Intl.DateTimeFormat("es-AR", {
 });
 
 export default function DocumentsList() {
+  const { user } = useAuth();
+  const labels = operationLabels(user?.node?.role);
   const [state, setState] = useState({ status: "loading", documents: [] });
 
   useEffect(() => {
@@ -56,7 +60,7 @@ export default function DocumentsList() {
         <header className="docs-page__header">
           <h1 className="docs-page__title">Mis documentos</h1>
           <Link to="/upload" className="docs-page__cta">
-            Subir pedido
+            {labels.action}
           </Link>
         </header>
 
@@ -88,7 +92,7 @@ export default function DocumentsList() {
             <FileText size={40} aria-hidden="true" />
             <p>Todavía no subiste documentos.</p>
             <Link to="/upload" className="docs-page__empty-cta">
-              Subir tu primer pedido
+              {labels.firstAction}
             </Link>
           </div>
         )}

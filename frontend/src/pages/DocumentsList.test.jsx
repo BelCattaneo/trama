@@ -6,15 +6,15 @@ import DocumentsList from "./DocumentsList";
 
 const USER = {
   user: { id: "u", email: "demo@example.com", full_name: "Demo" },
-  node: { id: "n", display_name: "Cooperativa Demo" },
+  node: { id: "n", display_name: "Cooperativa Demo", role: "consumer" },
 };
 
 function renderPage() {
   return render(
-    <MemoryRouter initialEntries={["/mis-documentos"]}>
+    <MemoryRouter initialEntries={["/documents"]}>
       <AuthProvider initialUser={USER}>
         <Routes>
-          <Route path="/mis-documentos" element={<DocumentsList />} />
+          <Route path="/documents" element={<DocumentsList />} />
           <Route path="/upload" element={<div>upload page</div>} />
         </Routes>
       </AuthProvider>

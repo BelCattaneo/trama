@@ -2,7 +2,9 @@ import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CircleAlert, Loader, Upload as UploadIcon } from "lucide-react";
 import NavBarAuth from "../components/NavBarAuth";
+import { useAuth } from "../contexts/AuthContext";
 import { apiPostForm } from "../lib/api";
+import { operationLabels } from "../lib/roleLabels";
 import "./Upload.css";
 
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -23,11 +25,13 @@ function isAcceptedFile(file) {
 
 export default function Upload() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const inputRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [filename, setFilename] = useState("");
   const [error, setError] = useState("");
+  const labels = operationLabels(user?.node?.role);
 
   async function handleFile(file) {
     setError("");
@@ -46,7 +50,7 @@ export default function Upload() {
     try {
       const response = await apiPostForm("/api/documents", formData);
       if (response.status === 201) {
-        navigate("/mis-documentos");
+        navigate("/documents");
         return;
       }
       if (response.status === 400) {
@@ -90,10 +94,9 @@ export default function Upload() {
     <div className="page-shell upload-page">
       <NavBarAuth />
       <main className="upload-page__content">
-        <h1 className="upload-page__title">Subir pedido</h1>
+        <h1 className="upload-page__title">{labels.action}</h1>
         <p className="upload-page__lead">
-          Subí tu planilla, foto o PDF con el pedido. Trama se encarga de
-          interpretarlo.
+          Subí tu planilla, foto o PDF. Trama se encarga de interpretarlo.
         </p>
 
         {!uploading && (
