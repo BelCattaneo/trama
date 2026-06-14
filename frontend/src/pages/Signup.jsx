@@ -4,7 +4,7 @@ import Button from "../components/Button";
 import Input from "../components/Input";
 import NavBarPublic from "../components/NavBarPublic";
 import RolePicker from "../components/RolePicker";
-import { isValidCuitFormat } from "../lib/cuit";
+import { formatCuit, isValidCuitFormat } from "../lib/cuit";
 import "./Signup.css";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -113,8 +113,9 @@ export default function Signup() {
             label="CUIT"
             id="signup-cuit"
             placeholder="XX-XXXXXXXX-X"
+            inputMode="numeric"
             value={form.cuit}
-            onChange={(e) => set("cuit", e.target.value)}
+            onChange={(e) => set("cuit", formatCuit(e.target.value))}
             error={errors.cuit}
           />
           <Input
