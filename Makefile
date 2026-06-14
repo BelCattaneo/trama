@@ -1,7 +1,7 @@
 .PHONY: help backend frontend db db-down db-logs migrate migrate-dry seed lint test test-frontend
 
 help:
-	@grep -E '^[a-z-]+:' Makefile | sed 's/:.*//'
+	@grep -E '^[a-z0-9-]+:' Makefile | sed 's/:.*//'
 
 backend:
 	cd backend && uv run uvicorn trama.main:app --reload
