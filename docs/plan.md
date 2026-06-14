@@ -290,6 +290,26 @@ INDEX (node_id)
 INDEX (email)
 ```
 
+### `Document`
+
+Raw uploaded file. Belongs to a Node. Same bytes shared via storage-layer dedup; multiple `Document` rows can point at the same `storage_ref`.
+
+```sql
+document
+  id                uuid             PK, server-generated
+  node_id           uuid             NOT NULL REFERENCES node(id) ON DELETE CASCADE
+  original_filename varchar(255)     NOT NULL
+  mime_type         varchar(100)     NOT NULL                 -- CHECK whitelisted to 5 formats
+  size_bytes        integer          NOT NULL CHECK > 0
+  content_hash      char(64)         NOT NULL                 -- SHA-256 hex, NOT UNIQUE
+  storage_ref       varchar(500)     NOT NULL                 -- opaque ref returned by the storage layer
+  uploaded_at       timestamptz      NOT NULL DEFAULT now()
+
+CHECK (mime_type IN (xlsx, csv, jpeg, png, pdf — full mime strings))
+INDEX (node_id)
+INDEX (content_hash)
+```
+
 ### Notes
 
 - CUIT validation = format (`XX-XXXXXXXX-X`) + checksum (Argentina). Verified at signup.
@@ -299,10 +319,13 @@ INDEX (email)
 - Privacy: for the MVP, all Nodes are personas jurídicas, so lat/lon is stored plainly (see CLAUDE.md).
 - Address geocoding via Nominatim (no API key required, sent with a proper User-Agent).
 - Index notation above (`INDEX (cuit)`, `INDEX (email)`) means "this column needs a lookup path"; UNIQUE constraints already create such an index, so the migration only emits explicit `CREATE INDEX` statements for non-unique columns (`role`, `node_id`).
+- `Document.content_hash` is **NOT UNIQUE** — two rows with the same hash are allowed (different upload context). The storage layer dedupes the physical bytes; two rows can share the same `storage_ref`.
+- `Document.mime_type` whitelisted via CHECK constraint: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `text/csv`, `image/jpeg`, `image/png`, `application/pdf`. Backend re-detects mime from bytes before insert; the constraint is defense-in-depth.
+- `Document.node_id` cascades on delete; if a Node disappears, its documents go too.
 
 ### Pending entities
 
-`Document`, `ParseAttempt`, `Operation`, `OperationLine`, `Product`, `Correction`. Defined in the next iteration.
+`ParseAttempt`, `Operation`, `OperationLine`, `Product`, `Correction`. Defined in the next iteration.
 
 ---
 
