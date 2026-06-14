@@ -1,0 +1,128 @@
+.docs-page__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 48px 80px;
+  color: var(--foreground-primary);
+  font-family: var(--font-body);
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.docs-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.docs-page__title {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.docs-page__cta {
+  background: var(--accent-primary);
+  color: var(--surface-inverse);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.docs-page__cta:hover {
+  filter: brightness(0.95);
+}
+
+.docs-page__cta:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.docs-page__status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: var(--surface-card);
+}
+
+.docs-page__status--error {
+  border: 1px solid var(--accent-error, #c83b3b);
+  color: var(--accent-error, #c83b3b);
+}
+
+.docs-page__spinner {
+  animation: docs-spin 1s linear infinite;
+}
+
+@keyframes docs-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.docs-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 24px;
+  background: var(--surface-card);
+  border-radius: 12px;
+  text-align: center;
+  color: var(--foreground-primary);
+}
+
+.docs-page__empty p {
+  margin: 0;
+  color: var(--foreground-secondary);
+}
+
+.docs-page__empty-cta {
+  background: transparent;
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.docs-page__empty-cta:hover {
+  background: var(--accent-primary);
+  color: var(--surface-inverse);
+}
+
+.docs-page__empty-cta:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.docs-page__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.docs-page__table th,
+.docs-page__table td {
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle, var(--border-default));
+}
+
+.docs-page__table th {
+  font-weight: 600;
+  color: var(--foreground-secondary);
+}

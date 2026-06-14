@@ -4,8 +4,8 @@ function request(path, init = {}) {
   return fetch(path, { credentials: "include", ...init });
 }
 
-export function apiGet(path) {
-  return request(path);
+export function apiGet(path, init = {}) {
+  return request(path, init);
 }
 
 export function apiPost(path, body) {
