@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     # Comma-separated origins for CORSMiddleware. Empty = no origin allowed
     # (prod-safe default); dev should set this to the Vite origin.
     cors_origins: str = ""
+    session_ttl_days: int = 30
+    # Dev default is False so the cookie works over plain HTTP localhost; prod must override.
+    cookie_secure: bool = False
 
 
 settings = Settings()
