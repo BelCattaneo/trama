@@ -72,16 +72,185 @@ Built in collaboration with a real-world agroecological collective. The primary 
 
 ## Phase 1 — Personas + Epics
 
-_To be written._
+### Personas
 
-## Phase 2 — User stories per epic
+**P1 — Consumer Node (primary, active in MVP)**
+The first user logged into the MVP. Represents a consumer-side legal entity (mutual, cooperative, or buying group) within an agroecological collective. Tech comfort medium-high: laptop user, comfortable with web apps. Operational cadence: weekly to monthly, irregular. Uploads order lists in xlsx, csv, or photo. Expects to see what the system understood before confirming.
 
-_To be written._
+**P2 — Producer Node (modeled, no UI flow)**
+Exists as a record in the DB (Node with role `producer` or `both`). Has CUIT, display name, location. No UI flow in the MVP — no signup, no upload, no login. Pre-loaded by seed so consumer orders can reference it.
+
+Roles explicitly out of scope for this MVP: coordinators, admins, multi-tenant operators.
+
+### Epics
+
+| # | Epic | Delivers |
+|---|---|---|
+| **E1** | Infra & data model | Postgres schema, sequential migrations, FastAPI scaffold, Vite scaffold, healthcheck, dotenv. |
+| **E2** | Node registration & auth | Signup flow (Node + User), Nominatim geocoding, email + password login, server-side sessions, logout. |
+| **E3** | Document upload & storage | UI to upload (xlsx/csv/photo), backend that receives, validates format, persists the original document + metadata. |
+| **E4** | Deterministic parsing (xlsx/csv) | Parser that opens the spreadsheet, maps columns to canonical fields, extracts operation + lines. |
+| **E5** | LLM parsing (photo) | LLM call with the image, designed prompt, extraction to the same structure as E4. |
+| **E6** | Validation & confirmation | "This is what I understood" screen: parsed output, per-field editing, on confirm persists operation + lines + captures corrections as eval data. |
+| **E7** | My orders | Confirmed-orders list for the logged-in Node, with detail view. |
+| **E8** | Map view (post-MVP / stretch) | OSM map of all Nodes as markers, filtered by role. Not part of Demo Day acceptance. |
+
+### Acceptance criteria per epic
+
+Each AC answers: "what can I (the user) do once this epic is closed?" — independent of unit tests.
+
+**E1 — Infra & data model**
+- `curl http://localhost:8000/health` returns `200 OK` with `{"status":"ok","db":"ok"}`.
+- Schema applied: `psql -c "\dt"` lists all model tables.
+- `npm run dev` brings the UI up on `localhost:5173` with a minimal landing screen.
+- `docker-compose up postgres` starts Postgres with a named volume for persistence.
+- `.env.example` covers every variable the backend needs.
+
+**E2 — Node registration & auth**
+- I can sign up from the UI with CUIT + email + password + display name + role + address. Backend validates CUIT (format + checksum) and email uniqueness.
+- Backend geocodes the address via Nominatim to fill `latitude` + `longitude`. If geocoding fails, I can enter lat/lon manually.
+- If CUIT or email already exist, I see a clear error in Spanish.
+- After signup I'm automatically logged in.
+- I can log out and log back in with email + password.
+- If I refresh the page while logged in, my session survives.
+- If I hit `/upload` without a session, I'm redirected to `/login`.
+
+**E3 — Document upload & storage**
+- Logged in as a consumer Node, I can select an xlsx / csv / jpg / png / pdf and upload it.
+- The backend rejects other formats with a readable error.
+- After upload I can see the file in a "my documents" list with name, date, type, and id.
+- The DB has a `Document` record with `node_id`, `mime_type`, `content_hash`, `storage_ref`, `uploaded_at`.
+- Uploading the same file twice does not duplicate storage (dedup by `content_hash`).
+
+**E4 — Deterministic parsing (xlsx/csv)**
+- After uploading an xlsx fixture, a `ParseAttempt` is created with `strategy='deterministic'`, a `confidence`, and a `payload` JSON of products + quantities + units.
+- The parser handles at least two column-name variants (e.g. `producto` / `item`, `cantidad` / `qty`).
+- If no columns are recognizable, the parser fails cleanly: `ParseAttempt` with `confidence=0` and a message "no se pudo parsear automáticamente, pasar a revisión manual".
+
+**E5 — LLM parsing (photo)**
+- After uploading a photo of a handwritten sheet, a `ParseAttempt` is created with `strategy='llm'`, a `prompt_version`, and a `payload` JSON in the same shape as E4.
+- I can see a `confidence` and reasons (e.g. "could not read line 3").
+- The prompt text and version are persisted with the `ParseAttempt` so each extraction is traceable.
+
+**E6 — Validation & confirmation**
+- After uploading any format, I go to a "review" screen showing every parsed line (product, quantity, unit).
+- I can edit any field. Every edit creates a `Correction` record (field, original value, corrected value, timestamp).
+- I can add lines the parser missed, or delete false lines.
+- On confirm, an `Operation` + its `OperationLine`s persist, marked `confirmed`. The operation is no longer editable.
+- Corrections continue to live in the DB as offline evaluation data.
+
+**E7 — My orders**
+- `/my-orders` lists all my confirmed `Operation`s with date, line count, and (optionally) the referenced producer.
+- Click on an operation shows the detail (lines: product, quantity, unit).
+- Bonus: download the operation as CSV.
+
+**E8 — Map view (post-MVP)**
+- `/map` shows an OSM tile layer of Argentina.
+- Each Node renders as a marker at its `latitude` / `longitude`.
+- Markers are color-coded by `role`. Popup on click shows `display_name`, `role`, `zone_label`.
+- Filter checkboxes hide/show by role. Not part of Demo Day video.
+
+---
+
+## Phase 2 — Tickets per epic
+
+_To be written. Format: GitHub Issues, one per ticket, labelled by epic. Each ticket has acceptance criteria, dependencies, and effort estimate (XS / S / M / L)._
+
+---
 
 ## Phase 3 — Data model
 
-_To be written._
+Partial. `Node` and `User` locked. Other entities defined as they're tackled.
 
-## Phase 4 — Build order / roadmap
+### Entities overview
 
-_To be written._
+| Entity | Purpose |
+|---|---|
+| `Node` | Participant (consumer, producer, or both). Identified by CUIT. |
+| `User` | Person who logs in. Belongs to one Node. Schema 1:N; MVP UI enforces 1:1. |
+| `Document` | Raw uploaded file (xlsx/csv/photo). Belongs to a Node. |
+| `ParseAttempt` | Result of parsing a Document. Strategy = deterministic or LLM. |
+| `Operation` | Confirmed commercial event (order; future: offer). Belongs to a Node. |
+| `OperationLine` | Line item within an Operation (product, quantity, unit). |
+| `Product` | Canonical product reference, with aliases for normalization. |
+| `Correction` | Captures every human edit during validation, for offline parsing-quality analysis. |
+
+### `Node`
+
+```sql
+Node
+  id              uuid             PK, server-generated
+  cuit            varchar(13)      UNIQUE, NOT NULL          -- "XX-XXXXXXXX-X"
+  display_name    varchar(120)     NOT NULL
+  role            varchar(20)      NOT NULL                  -- 'consumer'|'producer'|'both'
+  address_text    varchar(300)     NULL
+  latitude        double precision NOT NULL                  -- WGS84
+  longitude       double precision NOT NULL                  -- WGS84
+  zone_label      varchar(120)     NULL
+  created_at      timestamptz      NOT NULL DEFAULT now()
+  updated_at      timestamptz      NOT NULL DEFAULT now()
+
+CHECK (role IN ('consumer','producer','both'))
+INDEX (cuit)
+INDEX (role)
+```
+
+### `User`
+
+```sql
+User
+  id              uuid             PK, server-generated
+  node_id         uuid             NOT NULL REFERENCES Node(id) ON DELETE RESTRICT
+  email           varchar(254)     UNIQUE, NOT NULL
+  password_hash   varchar(255)     NOT NULL                  -- bcrypt via passlib
+  full_name       varchar(120)     NULL
+  last_login_at   timestamptz      NULL
+  created_at      timestamptz      NOT NULL DEFAULT now()
+  updated_at      timestamptz      NOT NULL DEFAULT now()
+
+INDEX (node_id)
+INDEX (email)
+```
+
+### Notes
+
+- CUIT validation = format (`XX-XXXXXXXX-X`) + checksum (Argentina). Verified at signup.
+- `password_hash` uses bcrypt via `passlib` (dependency to be added when E2 starts).
+- MVP UI enforces 1 User per Node; schema allows N for future multi-user.
+- No `is_active` / soft-delete in MVP. Real deletion is not exposed in the UI.
+- Privacy: for the MVP, all Nodes are personas jurídicas, so lat/lon is stored plainly (see CLAUDE.md).
+- Address geocoding via Nominatim (no API key required, sent with a proper User-Agent).
+
+### Pending entities
+
+`Document`, `ParseAttempt`, `Operation`, `OperationLine`, `Product`, `Correction`. Defined in the next iteration.
+
+---
+
+## Phase 4 — Build order + parallelization
+
+### Sequential view (single-threaded)
+
+Tentative order if built one epic at a time: E1 → E2 → E3 → E4 → E6 → E5 → E7 → (E8 post-MVP).
+
+### Parallel streams
+
+Once the data contracts and schemas are locked (end of E1), three streams can move in parallel:
+
+- **Stream A — Backend service**
+  Endpoints, persistence, session, integrations. Implements E2 backend, E3 backend, E6 backend, E7 backend.
+
+- **Stream B — Frontend**
+  Vite app, routing, forms, screens. Implements E2 frontend, E3 frontend, E6 frontend, E7 frontend. Can work against a mocked backend until A is ready to integrate.
+
+- **Stream C — Parsing libraries**
+  Pure functions: file in, structured JSON out. Implements E4 (deterministic) and E5 (LLM). Plays nice with fixtures and no HTTP. Wired into the backend at integration time.
+
+### Integration points
+
+The streams must converge on shared contracts agreed upfront:
+- Pydantic schemas for `ParsePayload`, `OperationDraft`, `OperationConfirmed`.
+- HTTP API contract for `/documents`, `/parse-attempts`, `/operations`, `/auth/*`.
+- Frontend uses the same Pydantic-derived JSON shapes (mirrored as TS/JS types if helpful).
+
+Once contracts are pinned, streams A, B, and C can progress with minimal blocking. Integration tickets at the end of each epic wire them together.
