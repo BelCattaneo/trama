@@ -1,4 +1,5 @@
 import { Route, Routes } from "react-router-dom";
+import RequireAuth from "./components/RequireAuth";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -10,7 +11,14 @@ export default function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/upload" element={<Upload />} />
+      <Route
+        path="/upload"
+        element={
+          <RequireAuth>
+            <Upload />
+          </RequireAuth>
+        }
+      />
     </Routes>
   );
 }

@@ -1,3 +1,14 @@
+import NavBarAuth from "../components/NavBarAuth";
+import "./Upload.css";
+
 export default function Upload() {
-  return <h2>Subir documento</h2>;
+  return (
+    <div className="upload-page">
+      <NavBarAuth />
+      <main className="upload-page__content">
+        <h1>Subir documento</h1>
+        <p>(En construcción — viene en E3.)</p>
+      </main>
+    </div>
+  );
 }
