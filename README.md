@@ -39,7 +39,7 @@ npm run dev
 
 ## Privacy
 
-Personal data is hashed or not stored. Location is recorded as a geohash, never as a raw coordinate. See [CLAUDE.md](./CLAUDE.md) for the full set of project rules.
+The MVP onboards only legal entities (mutuals, cooperatives, organizations). For them, CUIT and coordinates are stored plainly — they are semi-public identifiers. Natural persons are out of the MVP scope; when they enter, identifying data is hashed and location is reduced to a zone-level geohash. Personal data is never sold to third parties and never appears in logs, public endpoints, or error responses. See [CLAUDE.md](./CLAUDE.md) for the full set of project rules.
 
 ## License
 
