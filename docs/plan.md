@@ -154,7 +154,7 @@ Each AC answers: "what can I (the user) do once this epic is closed?" — indepe
 
 ## Phase 2 — Tickets per epic
 
-**E1 and E2 — detailed tickets live as GitHub Issues** (#1–#17), labelled by epic + stream + milestone `MVP`. Browse:
+**All tickets live as GitHub Issues** (#1–#50), labelled by epic + stream + milestone `MVP`. E1 and E2 (#1–#17) are detailed; E3–E8 (#18–#49) are sketches that get deepened when their epic comes up; #50 is the root Makefile chore. Browse:
 
 - All MVP issues: [`is:issue milestone:MVP`](https://github.com/BelCattaneo/trama/issues?q=is%3Aissue+milestone%3AMVP)
 - E1 only: [`label:epic-1`](https://github.com/BelCattaneo/trama/issues?q=is%3Aissue+label%3Aepic-1)
@@ -214,19 +214,23 @@ Each AC answers: "what can I (the user) do once this epic is closed?" — indepe
 - **E8.3** Marker rendering. One marker per Node at `latitude`/`longitude`. Color by role. Popup on click. *(Stream B)*
 - **E8.4** Role filter UI. Show/hide producers / consumers / both. *(Stream B)*
 
+### E1.8 — Root Makefile  *(chore)*
+
+- **E1.8** `Makefile` at the repo root wrapping common dev commands (`backend`, `frontend`, `db`, `db-down`, `db-logs`, `lint`). Grows as later epics add targets. *(Stream A/B — root)*
+
 ### Backlog totals
 
 | Epic | Tickets | Status |
 |---|---:|---|
-| E1 | 7 | Issues #1–#7 |
+| E1 | 8 | Issues #1–#7, #50 |
 | E2 | 10 | Issues #8–#17 |
-| E3 | 6 | sketched |
-| E4 | 6 | sketched |
-| E5 | 5 | sketched |
-| E6 | 6 | sketched |
-| E7 | 5 | sketched |
-| E8 (post-MVP) | 4 | sketched |
-| **Total** | **49** | |
+| E3 | 6 | sketched (#18–#23) |
+| E4 | 6 | sketched (#24–#29) |
+| E5 | 5 | sketched (#30–#34) |
+| E6 | 6 | sketched (#35–#40) |
+| E7 | 5 | sketched (#41–#45) |
+| E8 (post-MVP) | 4 | sketched (#46–#49) |
+| **Total** | **50** | |
 
 ---
 
