@@ -37,6 +37,12 @@ backend/dist/
 frontend/dist/
 frontend/build/
 
+# Playwright
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+frontend/.playwright/
+
 # Databases
 *.db
 *.sqlite

@@ -1,4 +1,4 @@
-.PHONY: help backend frontend db db-down db-logs migrate migrate-dry seed lint test test-frontend
+.PHONY: help backend frontend db db-down db-logs migrate migrate-dry seed lint test test-frontend test-e2e test-e2e-headed test-e2e-ui
 
 help:
 	@grep -E '^[a-z0-9-]+:' Makefile | sed 's/:.*//'
@@ -36,3 +36,12 @@ test:
 
 test-frontend:
 	cd frontend && npm run test:run
+
+test-e2e:
+	cd frontend && npm run test:e2e
+
+test-e2e-headed:
+	cd frontend && npm run test:e2e:headed
+
+test-e2e-ui:
+	cd frontend && npm run test:e2e:ui
