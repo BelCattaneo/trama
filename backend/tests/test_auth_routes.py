@@ -143,3 +143,26 @@ async def test_me_returns_401_after_logout(setup):
         me_after = await client.get("/api/me")
     assert me_before.status_code == 200
     assert me_after.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_login_unknown_email_runs_dummy_verify(monkeypatch, pool_lifecycle):
+    from trama import auth_routes
+
+    calls = []
+
+    def spy_verify(plaintext, hashed):
+        calls.append((plaintext, hashed))
+        return False
+
+    monkeypatch.setattr(auth_routes, "verify_password", spy_verify)
+    async with _client() as client:
+        response = await client.post(
+            "/api/auth/login",
+            json={"email": "nobody@example.com", "password": "anything"},
+        )
+    assert response.status_code == 401
+    assert response.json() == {"error": "credenciales inválidas"}
+    assert len(calls) == 1, (
+        "unknown-email path must still run a verify_password against the dummy hash"
+    )

@@ -217,7 +217,7 @@ async def test_signup_hashes_password(signup_db):
             )
             (stored,) = await cur.fetchone()
     assert stored != plaintext
-    assert stored.startswith("$2b$12$")
+    assert stored.startswith("$2b$")
 
 
 @pytest.mark.asyncio

@@ -1,19 +1,16 @@
 from uuid import uuid4
 
-import httpx
 import pytest
 import pytest_asyncio
-from httpx import ASGITransport
 
 from trama import db
-from trama.config import settings
-from trama.main import app
-from trama.sessions import create_session
+from trama.sessions import COOKIE_NAME, create_session
+
+from .conftest import client
 
 
 @pytest_asyncio.fixture
-async def setup():
-    await db.open_pool(settings.database_url, settings.pool_min, settings.pool_max)
+async def setup(pool_lifecycle):
     cuit = f"00-{uuid4().hex[:8]}-0"
     email = f"test-{uuid4().hex[:8]}@example.com"
     async with db.pool.connection() as conn:
@@ -46,18 +43,13 @@ async def setup():
         async with conn.cursor() as cur:
             await cur.execute("DELETE FROM app_user WHERE id = %s", (uid,))
             await cur.execute("DELETE FROM node WHERE id = %s", (node_id,))
-    await db.close_pool()
-
-
-def _client():
-    return httpx.AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
 
 
 @pytest.mark.asyncio
 async def test_me_authenticated(setup):
-    async with _client() as client:
-        client.cookies.set("trama_session", setup["session_id"])
-        response = await client.get("/api/me")
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.get("/api/me")
     assert response.status_code == 200
     body = response.json()
     assert body["user"]["email"] == setup["email"]
@@ -72,16 +64,16 @@ async def test_me_authenticated(setup):
 
 @pytest.mark.asyncio
 async def test_me_unauthenticated_no_cookie():
-    async with _client() as client:
-        response = await client.get("/api/me")
+    async with client() as c:
+        response = await c.get("/api/me")
     assert response.status_code == 401
     assert response.json() == {"error": "no autenticado"}
 
 
 @pytest.mark.asyncio
 async def test_me_unauthenticated_invalid_cookie(setup):
-    async with _client() as client:
-        client.cookies.set("trama_session", "completely-invalid-session-id")
-        response = await client.get("/api/me")
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, "completely-invalid-session-id")
+        response = await c.get("/api/me")
     assert response.status_code == 401
     assert response.json() == {"error": "no autenticado"}

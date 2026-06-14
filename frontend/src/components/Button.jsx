@@ -5,7 +5,6 @@ export default function Button({
   type = "button",
   fullWidth = false,
   loading = false,
-  disabled = false,
   children,
   ...props
 }) {
@@ -15,7 +14,7 @@ export default function Button({
     <button
       type={type}
       className={classes.join(" ")}
-      disabled={disabled || loading}
+      disabled={loading}
       {...props}
     >
       {loading ? "Cargando…" : children}

@@ -5,6 +5,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { apiGet, apiPost } from "../lib/api";
 
 const AuthContext = createContext(null);
 
@@ -15,7 +16,7 @@ export function AuthProvider({ children, initialUser = undefined }) {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/me", { credentials: "include" });
+      const response = await apiGet("/api/me");
       if (response.ok) {
         setUser(await response.json());
       } else {
@@ -34,7 +35,7 @@ export function AuthProvider({ children, initialUser = undefined }) {
     (async () => {
       setLoading(true);
       try {
-        const response = await fetch("/api/me", { credentials: "include" });
+        const response = await apiGet("/api/me");
         if (cancelled) return;
         if (response.ok) {
           setUser(await response.json());
@@ -54,17 +55,14 @@ export function AuthProvider({ children, initialUser = undefined }) {
 
   async function logout() {
     try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
+      await apiPost("/api/auth/logout");
     } finally {
       setUser(null);
     }
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, setUser, logout, refresh }}>
+    <AuthContext.Provider value={{ user, loading, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );
