@@ -158,6 +158,7 @@ If a proposal pushes toward any of these, **discuss it explicitly before coding*
 - Imperative: `add xlsx parser`, not `added` or `adding`.
 - Describe the change, not the process (`add unit normalization`, not `as you asked, added…`).
 - No `WIP`, `checkpoint`, `fix previous typo`, `review fix`. If "and", "also", or "+" appears in the title, that commit is two.
+- **Reference the ticket**: every commit tied to an issue ends with `(#N)` so GitHub auto-links and the issue gets a backref. Example: `add backend scaffold (#1)`. If a commit covers multiple tickets, it's almost certainly two commits.
 - **AI attribution**: AI involvement may be traced when it adds context, but not as automated noise. Case by case.
 
 ### Size and scope
@@ -206,6 +207,13 @@ When the time comes: `docker-compose.yml` with three services — backend, front
 
 - `main` is the development branch (solo project; no need for feature branches yet).
 - Before structural changes (new model entity, cross-cutting refactor, new deps): **short plan in conversation before touching code.**
+
+### Tickets are contracts — always
+
+- Before committing work tied to a ticket: **re-read the ticket and verify every claim is true in the code**. Every line of "What", every acceptance criterion, every "Notes" item.
+- Run the AC commands end-to-end (curl, ruff, npm build, etc.). "It compiles" is not "it works". "The agent reported done" is not "I verified done".
+- If the implementation diverged from the ticket — extra behavior, missing behavior, renamed thing, changed scope — **update the ticket first** (`gh issue edit`), then commit. Never let code and ticket drift silently.
+- Applies equally to code produced by subagents: re-check the AC yourself before commit, do not trust the agent's "done" summary at face value.
 
 ---
 
