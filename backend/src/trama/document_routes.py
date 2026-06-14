@@ -3,12 +3,12 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, File, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from trama import db
-from trama.sessions import current_user
+from trama.sessions import AuthUser, current_user
 from trama.storage import Storage
 
 MAX_BYTES = 10 * 1024 * 1024
@@ -21,6 +21,17 @@ class DocumentOut(BaseModel):
     size_bytes: int
     content_hash: str
     uploaded_at: datetime
+
+
+class DocumentsListResponse(BaseModel):
+    documents: list[DocumentOut]
+
+
+async def require_user(request: Request) -> AuthUser:
+    user = await current_user(request)
+    if user is None:
+        raise HTTPException(status_code=401, detail="no autenticado")
+    return user
 
 
 def detect_mime(data: bytes) -> str | None:
@@ -48,12 +59,10 @@ router = APIRouter(prefix="/api")
 
 @router.post("/documents", status_code=201)
 async def upload_document(
-    request: Request, file: Annotated[UploadFile, File()]
+    request: Request,
+    file: Annotated[UploadFile, File()],
+    user: Annotated[AuthUser, Depends(require_user)],
 ):
-    user = await current_user(request)
-    if user is None:
-        return JSONResponse({"error": "no autenticado"}, status_code=401)
-
     contents = await file.read()
     size = len(contents)
     if size == 0:
@@ -98,3 +107,33 @@ async def upload_document(
         uploaded_at=uploaded_at,
     )
     return JSONResponse(out.model_dump(mode="json"), status_code=201)
+
+
+@router.get("/documents", response_model=DocumentsListResponse)
+async def list_documents(
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> DocumentsListResponse:
+    async with db.pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """SELECT id, original_filename, mime_type, size_bytes,
+                          content_hash, uploaded_at
+                   FROM document
+                   WHERE node_id = %s
+                   ORDER BY uploaded_at DESC""",
+                (user.node_id,),
+            )
+            rows = await cur.fetchall()
+    return DocumentsListResponse(
+        documents=[
+            DocumentOut(
+                id=r[0],
+                original_filename=r[1],
+                mime_type=r[2],
+                size_bytes=r[3],
+                content_hash=r[4],
+                uploaded_at=r[5],
+            )
+            for r in rows
+        ]
+    )
