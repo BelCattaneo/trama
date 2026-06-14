@@ -5,23 +5,11 @@ import NavBarAuth from "../components/NavBarAuth";
 import { useAuth } from "../contexts/AuthContext";
 import { apiPostForm } from "../lib/api";
 import { operationLabels } from "../lib/roleLabels";
+import {
+  ACCEPTED_EXTENSIONS,
+  validateClientFile,
+} from "../lib/uploadValidation";
 import "./Upload.css";
-
-const MAX_BYTES = 10 * 1024 * 1024;
-const ACCEPTED_EXTENSIONS = [".xlsx", ".csv", ".jpg", ".jpeg", ".png", ".pdf"];
-const ACCEPTED_MIMES = new Set([
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "text/csv",
-  "image/jpeg",
-  "image/png",
-  "application/pdf",
-]);
-
-function isAcceptedFile(file) {
-  if (ACCEPTED_MIMES.has(file.type)) return true;
-  const name = file.name.toLowerCase();
-  return ACCEPTED_EXTENSIONS.some((ext) => name.endsWith(ext));
-}
 
 export default function Upload() {
   const navigate = useNavigate();
@@ -34,15 +22,12 @@ export default function Upload() {
   const labels = operationLabels(user?.node?.role);
 
   async function handleFile(file) {
+    const validation = validateClientFile(file);
+    if (!validation.ok) {
+      setError(validation.error);
+      return;
+    }
     setError("");
-    if (!isAcceptedFile(file)) {
-      setError("Formato no soportado. Aceptamos xlsx, csv, jpg, png o pdf.");
-      return;
-    }
-    if (file.size > MAX_BYTES) {
-      setError("El archivo es muy grande. Máximo 10 MB.");
-      return;
-    }
     setFilename(file.name);
     setUploading(true);
     const formData = new FormData();
