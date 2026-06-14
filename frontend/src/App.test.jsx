@@ -2,11 +2,14 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import App from "./App";
+import { AuthProvider } from "./contexts/AuthContext";
 
-function renderAt(path) {
+function renderAt(path, initialUser = null) {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <App />
+      <AuthProvider initialUser={initialUser}>
+        <App />
+      </AuthProvider>
     </MemoryRouter>,
   );
 }
@@ -19,15 +22,32 @@ describe("App routes", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders the signup page on /signup", () => {
+  it("renders the signup page on /signup when anonymous", () => {
     renderAt("/signup");
     expect(
       screen.getByRole("heading", { name: /creá tu cuenta/i }),
     ).toBeInTheDocument();
   });
 
-  it("renders the login page on /login", () => {
+  it("renders the login page on /login when anonymous", () => {
     renderAt("/login");
+    expect(
+      screen.getByRole("heading", { name: /iniciá sesión/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("redirects authenticated users away from /login to /upload", () => {
+    renderAt("/login", {
+      user: { id: "u", email: "demo@example.com" },
+      node: { id: "n" },
+    });
+    expect(
+      screen.getByRole("heading", { name: /subir documento/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("bumps anonymous users from /upload back to /login", () => {
+    renderAt("/upload");
     expect(
       screen.getByRole("heading", { name: /iniciá sesión/i }),
     ).toBeInTheDocument();

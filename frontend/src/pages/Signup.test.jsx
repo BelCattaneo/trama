@@ -1,15 +1,18 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AuthProvider } from "../contexts/AuthContext";
 import Signup from "./Signup";
 
 function renderSignup() {
   return render(
     <MemoryRouter initialEntries={["/signup"]}>
-      <Routes>
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/upload" element={<div>upload landing</div>} />
-      </Routes>
+      <AuthProvider initialUser={null}>
+        <Routes>
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/upload" element={<div>upload landing</div>} />
+        </Routes>
+      </AuthProvider>
     </MemoryRouter>,
   );
 }
@@ -93,9 +96,25 @@ describe("Signup", () => {
   });
 
   it("submits valid form and navigates to /upload on success", async () => {
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ node_id: "n", user_id: "u" }),
+    global.fetch.mockImplementation(async (url) => {
+      if (url === "/api/auth/signup") {
+        return {
+          ok: true,
+          status: 201,
+          json: async () => ({ node_id: "n", user_id: "u" }),
+        };
+      }
+      if (url === "/api/me") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            user: { id: "u", email: VALID.email, full_name: null },
+            node: { id: "n" },
+          }),
+        };
+      }
+      throw new Error(`unexpected fetch call: ${url}`);
     });
     renderSignup();
     fillForm();
@@ -107,10 +126,17 @@ describe("Signup", () => {
       "/api/auth/signup",
       expect.objectContaining({
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: "include",
       }),
     );
-    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/me",
+      expect.objectContaining({ credentials: "include" }),
+    );
+    const signupCall = global.fetch.mock.calls.find(
+      ([url]) => url === "/api/auth/signup",
+    );
+    const body = JSON.parse(signupCall[1].body);
     expect(body.cuit).toBe(VALID.cuit);
     expect(body.role).toBe("consumer");
   });

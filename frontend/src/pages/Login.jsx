@@ -3,10 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import NavBarPublic from "../components/NavBarPublic";
+import { useAuth } from "../contexts/AuthContext";
 import "./Login.css";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { refresh } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
@@ -23,10 +25,12 @@ export default function Login() {
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
       if (response.ok) {
+        await refresh();
         navigate("/upload");
         return;
       }

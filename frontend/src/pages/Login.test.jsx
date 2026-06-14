@@ -1,16 +1,19 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AuthProvider } from "../contexts/AuthContext";
 import Login from "./Login";
 
 function renderLogin() {
   return render(
     <MemoryRouter initialEntries={["/login"]}>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/upload" element={<div>upload landing</div>} />
-        <Route path="/signup" element={<div>signup landing</div>} />
-      </Routes>
+      <AuthProvider initialUser={null}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/upload" element={<div>upload landing</div>} />
+          <Route path="/signup" element={<div>signup landing</div>} />
+        </Routes>
+      </AuthProvider>
     </MemoryRouter>,
   );
 }
@@ -54,9 +57,21 @@ describe("Login", () => {
   });
 
   it("navigates to /upload on successful login", async () => {
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ ok: true }),
+    global.fetch.mockImplementation(async (url) => {
+      if (url === "/api/auth/login") {
+        return { ok: true, status: 200, json: async () => ({ ok: true }) };
+      }
+      if (url === "/api/me") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            user: { id: "u", email: "demo@example.com", full_name: "Demo" },
+            node: { id: "n" },
+          }),
+        };
+      }
+      throw new Error(`unexpected fetch call: ${url}`);
     });
     renderLogin();
     fireEvent.change(screen.getByLabelText(/email/i), {
@@ -73,8 +88,12 @@ describe("Login", () => {
       "/api/auth/login",
       expect.objectContaining({
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: "include",
       }),
+    );
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/me",
+      expect.objectContaining({ credentials: "include" }),
     );
   });
 
