@@ -1,6 +1,6 @@
 import NavBarAuth from "../components/NavBarAuth";
 
-export default function MisPedidos() {
+export default function OrdersList() {
   return (
     <div className="page-shell">
       <NavBarAuth />

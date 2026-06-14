@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { FileText, Loader } from "lucide-react";
 import NavBarAuth from "../components/NavBarAuth";
 import { apiGet } from "../lib/api";
-import "./MisDocumentos.css";
+import "./DocumentsList.css";
 
 const MIME_LABELS = {
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
@@ -20,7 +20,7 @@ const dateFormatter = new Intl.DateTimeFormat("es-AR", {
   year: "numeric",
 });
 
-export default function MisDocumentos() {
+export default function DocumentsList() {
   const [state, setState] = useState({ status: "loading", documents: [] });
 
   useEffect(() => {
