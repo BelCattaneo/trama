@@ -31,13 +31,6 @@
   background: var(--accent-primary-hover);
 }
 
-.btn--secondary {
-  background: var(--surface-primary);
-  color: var(--foreground-primary);
-  border: 1px solid var(--border-input);
-  font-weight: 500;
-}
-
 .btn--full {
   width: 100%;
 }

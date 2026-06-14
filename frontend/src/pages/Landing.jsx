@@ -4,7 +4,7 @@ import "./Landing.css";
 
 export default function Landing() {
   return (
-    <div className="landing-page">
+    <div className="page-shell landing-page">
       <NavBarPublic />
       <main className="landing-page__hero">
         <h1 className="landing-page__headline">

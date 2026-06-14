@@ -3,7 +3,7 @@ import "./Upload.css";
 
 export default function Upload() {
   return (
-    <div className="upload-page">
+    <div className="page-shell upload-page">
       <NavBarAuth />
       <main className="upload-page__content">
         <h1>Subir documento</h1>

@@ -4,6 +4,7 @@ import Button from "../components/Button";
 import Input from "../components/Input";
 import NavBarPublic from "../components/NavBarPublic";
 import { useAuth } from "../contexts/AuthContext";
+import { apiPost } from "../lib/api";
 import "./Login.css";
 
 export default function Login() {
@@ -23,12 +24,7 @@ export default function Login() {
     setSubmitting(true);
     setError(null);
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await apiPost("/api/auth/login", { email, password });
       if (response.ok) {
         await refresh();
         navigate("/upload");
@@ -43,7 +39,7 @@ export default function Login() {
   }
 
   return (
-    <div className="login-page">
+    <div className="page-shell login-page">
       <NavBarPublic hideLoginLink />
       <main className="login-page__content">
         <form className="login-page__card" onSubmit={onSubmit} noValidate>

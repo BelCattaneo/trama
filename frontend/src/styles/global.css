@@ -16,3 +16,10 @@ body {
   color: var(--foreground-primary);
   background: var(--surface-primary);
 }
+
+.page-shell {
+  min-height: 100vh;
+  background: var(--surface-primary);
+  display: flex;
+  flex-direction: column;
+}
