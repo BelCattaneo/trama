@@ -35,6 +35,8 @@ export default function Login() {
         return;
       }
       setError("Credenciales inválidas");
+    } catch {
+      setError("No pudimos conectar con el servidor, intentá de nuevo.");
     } finally {
       setSubmitting(false);
     }

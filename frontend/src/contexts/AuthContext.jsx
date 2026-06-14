@@ -30,8 +30,27 @@ export function AuthProvider({ children, initialUser = undefined }) {
 
   useEffect(() => {
     if (initialUser !== undefined) return;
-    refresh();
-  }, [initialUser, refresh]);
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const response = await fetch("/api/me", { credentials: "include" });
+        if (cancelled) return;
+        if (response.ok) {
+          setUser(await response.json());
+        } else {
+          setUser(null);
+        }
+      } catch {
+        if (!cancelled) setUser(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [initialUser]);
 
   async function logout() {
     try {
