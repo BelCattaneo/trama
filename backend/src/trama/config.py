@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     log_level: str = "info"
+    # Comma-separated origins for CORSMiddleware. Empty = no origin allowed
+    # (prod-safe default); dev should set this to the Vite origin.
+    cors_origins: str = ""
 
 
 settings = Settings()
