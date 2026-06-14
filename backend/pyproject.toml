@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "trama backend — agroecological document ingestion."
 requires-python = ">=3.12"
 dependencies = [
+    "bcrypt>=5.0.0",
     "fastapi>=0.137.0",
     "psycopg[binary,pool]>=3",
     "pydantic>=2.13.4",
