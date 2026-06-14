@@ -35,9 +35,10 @@ cp .env.example .env
 # Postgres on 127.0.0.1:5432
 docker compose up -d postgres
 
-# Backend on :8000
+# Backend: install deps, apply migrations, then start the server on :8000
 cd backend
 uv sync
+uv run python -m trama.migrate up
 uv run uvicorn trama.main:app --reload
 
 # Frontend on :5173 (separate terminal)
@@ -45,6 +46,8 @@ cd frontend
 npm install
 npm run dev
 ```
+
+A `Makefile` at the root wraps the day-to-day commands — run `make help` to see them. For a one-shot dev DB with sample data, `ENV=dev uv run python -m trama.seed_dev` inserts a producer Node so consumer flows have something to reference.
 
 ## Privacy
 

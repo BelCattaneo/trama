@@ -298,6 +298,7 @@ INDEX (email)
 - No `is_active` / soft-delete in MVP. Real deletion is not exposed in the UI.
 - Privacy: for the MVP, all Nodes are personas jurídicas, so lat/lon is stored plainly (see CLAUDE.md).
 - Address geocoding via Nominatim (no API key required, sent with a proper User-Agent).
+- Index notation above (`INDEX (cuit)`, `INDEX (email)`) means "this column needs a lookup path"; UNIQUE constraints already create such an index, so the migration only emits explicit `CREATE INDEX` statements for non-unique columns (`role`, `node_id`).
 
 ### Pending entities
 

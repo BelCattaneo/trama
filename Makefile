@@ -1,4 +1,4 @@
-.PHONY: help backend frontend db db-down db-logs lint
+.PHONY: help backend frontend db db-down db-logs migrate migrate-dry seed lint
 
 help:
 	@grep -E '^[a-z-]+:' Makefile | sed 's/:.*//'
@@ -17,6 +17,15 @@ db-down:
 
 db-logs:
 	docker compose logs -f postgres
+
+migrate:
+	cd backend && uv run python -m trama.migrate up
+
+migrate-dry:
+	cd backend && uv run python -m trama.migrate up --dry-run
+
+seed:
+	cd backend && ENV=dev uv run python -m trama.seed_dev
 
 lint:
 	cd backend && uv run ruff check .
