@@ -1,4 +1,4 @@
-.PHONY: help backend frontend db db-down db-logs migrate migrate-dry seed lint test
+.PHONY: help backend frontend db db-down db-logs migrate migrate-dry seed lint test test-frontend
 
 help:
 	@grep -E '^[a-z-]+:' Makefile | sed 's/:.*//'
@@ -33,3 +33,6 @@ lint:
 
 test:
 	cd backend && uv run pytest
+
+test-frontend:
+	cd frontend && npm run test:run
