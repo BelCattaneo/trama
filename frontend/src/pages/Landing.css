@@ -68,3 +68,8 @@
   border: 1px solid var(--border-input);
   font-weight: 500;
 }
+
+.landing-page__cta:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}

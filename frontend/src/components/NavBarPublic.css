@@ -16,6 +16,13 @@
   text-decoration: none;
 }
 
+.nav-public__logo:focus-visible,
+.nav-public__link:focus-visible,
+.nav-public__cta:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
 .nav-public__right {
   display: flex;
   align-items: center;
