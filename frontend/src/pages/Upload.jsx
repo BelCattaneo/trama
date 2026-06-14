@@ -57,7 +57,13 @@ export default function Upload() {
         const body = await response.json().catch(() => ({}));
         setError(body.error || "El archivo no pudo ser procesado.");
       } else if (response.status === 401) {
-        setError("Tu sesión expiró. Iniciá sesión de nuevo.");
+        navigate("/login", {
+          state: {
+            message: "Tu sesión expiró. Iniciá sesión de nuevo.",
+          },
+          replace: true,
+        });
+        return;
       } else {
         setError("No pudimos subir el archivo, intentá de nuevo.");
       }
@@ -116,6 +122,7 @@ export default function Upload() {
             <button
               type="button"
               className="upload-page__pick"
+              aria-describedby="upload-formats-hint"
               onClick={() => inputRef.current?.click()}
             >
               Elegir archivo
@@ -131,7 +138,7 @@ export default function Upload() {
           </div>
         )}
 
-        <p className="upload-page__formats">
+        <p id="upload-formats-hint" className="upload-page__formats">
           Formatos aceptados: xlsx, csv, jpg, png, pdf · Máximo 10 MB
         </p>
 

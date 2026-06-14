@@ -40,10 +40,9 @@ export default function DocumentsList() {
           return;
         }
         const body = await response.json();
-        const docs = body.documents || [];
         setState({
-          status: docs.length === 0 ? "empty" : "list",
-          documents: docs,
+          status: body.documents.length === 0 ? "empty" : "list",
+          documents: body.documents,
         });
       } catch (err) {
         if (err.name === "AbortError") return;
@@ -111,7 +110,7 @@ export default function DocumentsList() {
                 <tr key={doc.id}>
                   <td>{doc.original_filename}</td>
                   <td>{dateFormatter.format(new Date(doc.uploaded_at))}</td>
-                  <td>{MIME_LABELS[doc.mime_type] || doc.mime_type}</td>
+                  <td>{MIME_LABELS[doc.mime_type]}</td>
                 </tr>
               ))}
             </tbody>

@@ -3,12 +3,12 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Request, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from trama import db
-from trama.sessions import AuthUser, current_user
+from trama.sessions import AuthUser, require_user
 from trama.storage import Storage
 
 MAX_BYTES = 10 * 1024 * 1024
@@ -25,13 +25,6 @@ class DocumentOut(BaseModel):
 
 class DocumentsListResponse(BaseModel):
     documents: list[DocumentOut]
-
-
-async def require_user(request: Request) -> AuthUser:
-    user = await current_user(request)
-    if user is None:
-        raise HTTPException(status_code=401, detail="no autenticado")
-    return user
 
 
 def detect_mime(data: bytes) -> str | None:

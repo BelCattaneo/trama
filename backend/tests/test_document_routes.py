@@ -1,15 +1,14 @@
 import hashlib
 import io
 import zipfile
-from uuid import uuid4
 
 import pytest
 import pytest_asyncio
 
 from trama import db
-from trama.sessions import COOKIE_NAME, create_session
+from trama.sessions import COOKIE_NAME
 
-from .conftest import client
+from .conftest import cleanup_node, client, make_node_with_user
 
 
 def make_xlsx_bytes(payload: bytes = b"<xml/>") -> bytes:
@@ -28,37 +27,9 @@ HEIC_BYTES = b"\x00\x00\x00\x20ftypheic\x00" * 4
 
 @pytest_asyncio.fixture
 async def setup(pool_lifecycle):
-    cuit = f"00-{uuid4().hex[:8]}-0"
-    email = f"test-{uuid4().hex[:8]}@example.com"
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                """INSERT INTO node (cuit, display_name, role, latitude, longitude)
-                   VALUES (%s, 'Test Node', 'consumer', -34.6, -58.4)
-                   RETURNING id""",
-                (cuit,),
-            )
-            (node_id,) = await cur.fetchone()
-            await cur.execute(
-                """INSERT INTO app_user (node_id, email, password_hash, full_name)
-                   VALUES (%s, %s, 'never-exposed-hash', 'Test User')
-                   RETURNING id""",
-                (node_id, email),
-            )
-            (uid,) = await cur.fetchone()
-    session = await create_session(uid)
-    yield {
-        "user_id": uid,
-        "node_id": node_id,
-        "session_id": session.id,
-    }
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                "DELETE FROM document WHERE node_id = %s", (node_id,)
-            )
-            await cur.execute("DELETE FROM app_user WHERE id = %s", (uid,))
-            await cur.execute("DELETE FROM node WHERE id = %s", (node_id,))
+    data = await make_node_with_user()
+    yield data
+    await cleanup_node(data["node_id"], data["user_id"])
 
 
 @pytest.mark.asyncio
@@ -158,6 +129,19 @@ async def test_upload_unauthenticated_no_cookie(pool_lifecycle):
         )
     assert response.status_code == 401
     assert response.json() == {"error": "no autenticado"}
+
+
+@pytest.mark.asyncio
+async def test_upload_rejects_utf8_text_without_delimiter(setup):
+    payload = b"this is plain prose without any csv delimiters at all\nstill prose\n"
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.post(
+            "/api/documents",
+            files={"file": ("notas.txt", payload, "application/octet-stream")},
+        )
+    assert response.status_code == 400
+    assert response.json() == {"error": "formato no soportado"}
 
 
 @pytest.mark.asyncio

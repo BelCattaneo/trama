@@ -1,0 +1,12 @@
+.operations-page__content {
+  flex: 1;
+  padding: 48px 80px;
+  color: var(--foreground-primary);
+  font-family: var(--font-body);
+}
+
+.operations-page__title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 500;
+}

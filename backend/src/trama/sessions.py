@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 from secrets import token_urlsafe
 from uuid import UUID
 
-from fastapi import Request, Response
+from fastapi import HTTPException, Request, Response
 
 from trama import db
 from trama.config import settings
@@ -87,6 +87,13 @@ async def current_user(request: Request) -> AuthUser | None:
             )
             row = await cur.fetchone()
     return AuthUser(*row) if row else None
+
+
+async def require_user(request: Request) -> AuthUser:
+    user = await current_user(request)
+    if user is None:
+        raise HTTPException(status_code=401, detail="no autenticado")
+    return user
 
 
 def set_session_cookie(response: Response, session_id: str) -> None:

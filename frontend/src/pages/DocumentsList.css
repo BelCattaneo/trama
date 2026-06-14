@@ -56,8 +56,8 @@
 }
 
 .docs-page__status--error {
-  border: 1px solid var(--accent-error, #c83b3b);
-  color: var(--accent-error, #c83b3b);
+  border: 1px solid var(--error);
+  color: var(--error);
 }
 
 .docs-page__spinner {
@@ -67,6 +67,12 @@
 @keyframes docs-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .docs-page__spinner {
+    animation: none;
   }
 }
 

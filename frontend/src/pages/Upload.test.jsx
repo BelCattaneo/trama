@@ -1,8 +1,13 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider } from "../contexts/AuthContext";
 import Upload from "./Upload";
+
+function LoginStub() {
+  const location = useLocation();
+  return <div>login page · {location.state?.message ?? ""}</div>;
+}
 
 function renderUpload() {
   return render(
@@ -20,6 +25,7 @@ function renderUpload() {
         <Routes>
           <Route path="/upload" element={<Upload />} />
           <Route path="/documents" element={<div>documents page</div>} />
+          <Route path="/login" element={<LoginStub />} />
         </Routes>
       </AuthProvider>
     </MemoryRouter>,
@@ -128,6 +134,23 @@ describe("Upload", () => {
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
         /no pudimos subir el archivo/i,
+      );
+    });
+  });
+
+  it("redirects to /login with explanatory message on 401", async () => {
+    global.fetch.mockResolvedValue({
+      status: 401,
+      ok: false,
+      json: async () => ({ error: "no autenticado" }),
+    });
+    renderUpload();
+    const input = screen.getByLabelText(/seleccionar archivo/i);
+    const file = makeFile("pedido.pdf", 1024, "application/pdf");
+    fireEvent.change(input, { target: { files: [file] } });
+    await waitFor(() => {
+      expect(screen.getByText(/login page/i)).toHaveTextContent(
+        /tu sesión expiró/i,
       );
     });
   });

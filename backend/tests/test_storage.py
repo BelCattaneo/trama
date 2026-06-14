@@ -98,11 +98,11 @@ def test_exists_rejects_traversal_ref(tmp_path):
 
 
 def test_no_tmp_visible_after_failed_write(tmp_path, monkeypatch):
+    import os
+
     storage = LocalStorage(tmp_path)
     content = b"will fail mid-write"
     h = sha256(content)
-
-    import os
 
     real_rename = os.rename
 
@@ -116,3 +116,4 @@ def test_no_tmp_visible_after_failed_write(tmp_path, monkeypatch):
 
     ref = f"{h[:2]}/{h}"
     assert storage.exists(ref) is False
+    assert list(tmp_path.rglob("*.tmp")) == []

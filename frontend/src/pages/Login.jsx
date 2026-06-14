@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import NavBarPublic from "../components/NavBarPublic";
@@ -9,11 +9,13 @@ import "./Login.css";
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { refresh } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const stateMessage = location.state?.message;
 
   async function onSubmit(event) {
     event.preventDefault();
@@ -44,6 +46,11 @@ export default function Login() {
       <main className="login-page__content">
         <form className="login-page__card" onSubmit={onSubmit} noValidate>
           <h1 className="login-page__title">Iniciá sesión</h1>
+          {stateMessage && !error && (
+            <p className="login-page__notice" role="status">
+              {stateMessage}
+            </p>
+          )}
           <Input
             label="Email"
             id="login-email"

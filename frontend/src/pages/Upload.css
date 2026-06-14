@@ -103,8 +103,8 @@
 }
 
 .upload-page__status--error {
-  border: 1px solid var(--accent-error, #c83b3b);
-  color: var(--accent-error, #c83b3b);
+  border: 1px solid var(--error);
+  color: var(--error);
 }
 
 .upload-page__status-title {
@@ -126,4 +126,19 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upload-page__spinner {
+    animation: none;
+  }
+}
+
+.upload-page__drop > * {
+  pointer-events: none;
+}
+
+.upload-page__drop > .upload-page__pick,
+.upload-page__drop > .upload-page__file-input {
+  pointer-events: auto;
 }
