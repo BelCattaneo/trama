@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from trama.config import settings
 from trama.db import close_pool, db_ok, open_pool
 from trama.log import configure_logging
+from trama.user_routes import router as user_router
 
 
 @asynccontextmanager
@@ -31,6 +32,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(user_router)
 
 
 @app.get("/")
