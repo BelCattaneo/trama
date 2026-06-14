@@ -214,6 +214,7 @@ When the time comes: `docker-compose.yml` with three services — backend, front
 - Run the AC commands end-to-end (curl, ruff, npm build, etc.). "It compiles" is not "it works". "The agent reported done" is not "I verified done".
 - If the implementation diverged from the ticket — extra behavior, missing behavior, renamed thing, changed scope — **update the ticket first** (`gh issue edit`), then commit. Never let code and ticket drift silently.
 - Applies equally to code produced by subagents: re-check the AC yourself before commit, do not trust the agent's "done" summary at face value.
+- **Close manually, not via commit keywords.** Commits use `(#N)` for backref only. Never use `closes #N` / `fixes #N` / `resolves #N` — those auto-close on push and bypass the human verification step. After the commit lands on main and the AC is verified there, close with `gh issue close <N> --comment "<what was verified>"`. The close gesture is the signal that a human checked, not an automation side-effect.
 
 ---
 
