@@ -9,6 +9,7 @@ from trama.auth_routes import router as auth_router
 from trama.config import settings
 from trama.db import close_pool, db_ok, open_pool
 from trama.log import configure_logging
+from trama.storage import LocalStorage
 from trama.user_routes import router as user_router
 
 
@@ -17,6 +18,7 @@ async def lifespan(app: FastAPI):
     configure_logging(settings.log_level)
     log = structlog.get_logger()
     await open_pool(settings.database_url, settings.pool_min, settings.pool_max)
+    app.state.storage = LocalStorage(settings.storage_path)
     log.info("startup", host=settings.host, port=settings.port)
     yield
     await close_pool()

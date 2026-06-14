@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,6 +20,7 @@ class Settings(BaseSettings):
     session_ttl_days: int = 30
     # Dev default is False so the cookie works over plain HTTP localhost; prod must override.
     cookie_secure: bool = False
+    storage_path: Path = Path("./storage")
 
 
 settings = Settings()
