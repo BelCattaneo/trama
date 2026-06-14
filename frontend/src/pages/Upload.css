@@ -2,11 +2,128 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 48px 24px;
-  text-align: center;
+  align-items: stretch;
+  gap: 28px;
+  padding: 48px 80px;
   color: var(--foreground-primary);
   font-family: var(--font-body);
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.upload-page__title {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.upload-page__lead {
+  margin: 0;
+  color: var(--foreground-secondary);
+}
+
+.upload-page__drop {
+  min-height: 220px;
+  background: var(--surface-card);
+  border: 2px dashed var(--border-default);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  color: var(--foreground-primary);
+}
+
+.upload-page__drop--active {
+  border-color: var(--accent-primary);
+  background: var(--surface-card-hover, var(--surface-card));
+}
+
+.upload-page__drop-title {
+  margin: 8px 0 0;
+  font-weight: 600;
+}
+
+.upload-page__drop-sub {
+  margin: 0;
+  color: var(--foreground-secondary);
+  font-size: 14px;
+}
+
+.upload-page__pick {
+  margin-top: 16px;
+  background: transparent;
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.upload-page__pick:hover {
+  background: var(--accent-primary);
+  color: var(--surface-inverse);
+}
+
+.upload-page__pick:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.upload-page__file-input {
+  display: none;
+}
+
+.upload-page__formats {
+  margin: 0;
+  color: var(--foreground-secondary);
+  font-size: 14px;
+  text-align: center;
+}
+
+.upload-page__status {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: var(--surface-card);
+}
+
+.upload-page__status--processing {
+  border: 1px solid var(--accent-tertiary);
+}
+
+.upload-page__status--error {
+  border: 1px solid var(--accent-error, #c83b3b);
+  color: var(--accent-error, #c83b3b);
+}
+
+.upload-page__status-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.upload-page__status-sub {
+  margin: 0;
+  color: var(--foreground-secondary);
+  font-size: 14px;
+}
+
+.upload-page__spinner {
+  animation: upload-spin 1s linear infinite;
+}
+
+@keyframes upload-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

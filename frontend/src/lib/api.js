@@ -13,3 +13,7 @@ export function apiPost(path, body) {
   if (body !== undefined) init.body = JSON.stringify(body);
   return request(path, init);
 }
+
+export function apiPostForm(path, formData) {
+  return request(path, { method: "POST", body: formData });
+}

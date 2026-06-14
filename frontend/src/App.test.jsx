@@ -39,10 +39,10 @@ describe("App routes", () => {
   it("redirects authenticated users away from /login to /upload", () => {
     renderAt("/login", {
       user: { id: "u", email: "demo@example.com" },
-      node: { id: "n" },
+      node: { id: "n", display_name: "Cooperativa Demo" },
     });
     expect(
-      screen.getByRole("heading", { name: /subir documento/i }),
+      screen.getByRole("heading", { name: /subir pedido/i }),
     ).toBeInTheDocument();
   });
 
