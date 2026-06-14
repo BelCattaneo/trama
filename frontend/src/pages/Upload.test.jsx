@@ -70,9 +70,7 @@ describe("Upload", () => {
     const input = screen.getByLabelText(/seleccionar archivo/i);
     const file = makeFile("big.pdf", 11 * 1024 * 1024, "application/pdf");
     fireEvent.change(input, { target: { files: [file] } });
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      /muy grande.*10 mb/i,
-    );
+    expect(screen.getByRole("alert")).toHaveTextContent(/muy grande.*10 mb/i);
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
