@@ -220,6 +220,18 @@ When the time comes: `docker-compose.yml` with three services — backend, front
 - Applies equally to code produced by subagents: re-check the AC yourself before commit, do not trust the agent's "done" summary at face value.
 - **Close manually, not via commit or PR keywords.** Commit titles and PR titles use `(#N)` for backref only. Never use `closes #N` / `fixes #N` / `resolves #N` in commits, PR titles, or PR bodies — those auto-close on merge and bypass the human verification step. After the PR merges and the AC is re-confirmed on main, close with `gh issue close <N> --comment "<what was verified>"`. The close gesture is the signal that a human checked, not an automation side-effect.
 
+### End-of-epic deep review — always
+
+- After every epic closes (last ticket merged and closed), run a **deep review pass** before moving to the next epic. Catch what slipped through per-ticket reviews.
+- Each pass covers, at minimum:
+  - **Security**: secrets never logged or returned; passwords always hashed before storage (`SELECT password_hash FROM app_user` should show only bcrypt strings); cookies have correct attributes; CORS allow-list is what's intended; SQL is parameterized; rate limits flagged for sensitive endpoints; PII boundaries respected (privacy section in this file).
+  - **Duplication / refactor opportunities**: only abstract on the third real case; before that, surface the duplication as a note for later.
+  - **Code quality**: unused imports, debug prints/logs, stale TODOs, dead code, comments that describe `what` instead of `why`, multi-paragraph docstrings.
+  - **Test gaps**: behaviour not covered, untested error branches, missing edge cases, integration tests that are actually unit tests, mocked things that should be real.
+  - **Performance / robustness**: no infinite-wait fetches without timeout, no pool leaks, no startup-time DB calls outside lifespan, no synchronous I/O inside async handlers.
+- The review produces a **punch list**: every finding becomes either (a) a polish PR before moving on, (b) a backlog issue with `tech-debt` label, or (c) a documented decision to defer with the reason.
+- Use parallel sub-agents per area (security / quality / tests / frontend) when feasible — keeps each lens focused and the main context light.
+
 ---
 
 ## How to run
