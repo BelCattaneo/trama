@@ -1,0 +1,120 @@
+/* Generated from trama.pen variables. Edit in Pencil, regenerate here. */
+
+:root {
+  --background: #f2f3f0;
+  --foreground: #111111;
+  --primary: #ff8400;
+  --primary-foreground: #111111;
+  --secondary: #e7e8e5;
+  --secondary-foreground: #111111;
+  --accent: #f2f3f0;
+  --accent-foreground: #111111;
+  --muted: #f2f3f0;
+  --muted-foreground: #666666;
+  --card: #ffffff;
+  --card-foreground: #111111;
+  --popover: #ffffff;
+  --popover-foreground: #111111;
+  --border: #cbccc9;
+  --input: #cbccc9;
+  --ring: #666666;
+  --destructive: #d93c15;
+
+  --color-error: #e5dcda;
+  --color-error-foreground: #8c1c00;
+  --color-success: #dfe6e1;
+  --color-success-foreground: #004d1a;
+  --color-warning: #e9e3d8;
+  --color-warning-foreground: #804200;
+  --color-info: #dfdfe6;
+  --color-info-foreground: #000066;
+
+  --sidebar: #e7e8e5;
+  --sidebar-foreground: #666666;
+  --sidebar-primary: #18181b;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #cbccc9;
+  --sidebar-accent-foreground: #18181b;
+  --sidebar-border: #cbccc9;
+  --sidebar-ring: #71717a;
+
+  --accent-primary: #2d5e3a;
+  --accent-primary-hover: #245030;
+  --accent-secondary: #4a8c5e;
+  --accent-tertiary: #a8ccaf;
+
+  --foreground-primary: #1b3a28;
+  --foreground-secondary: #4a6b52;
+  --foreground-muted: #8a9e8f;
+  --foreground-inverse: #ffffff;
+
+  --surface-primary: #f5f3ee;
+  --surface-card: #ffffff;
+  --surface-input: #ffffff;
+  --surface-inverse: #1b3a28;
+
+  --border-input: #c2ccbe;
+  --border-subtle: #d6ddd0;
+
+  --confidence-high: #2d7a3a;
+  --confidence-medium: #b8860b;
+  --confidence-low: #c43d3d;
+
+  --success: #2d7a3a;
+  --success-bg: #f0f8f1;
+  --warning: #b8860b;
+  --warning-bg: #fff8e7;
+  --error: #c43d3d;
+  --error-bg: #fdf2f2;
+
+  --black: #000000;
+  --white: #ffffff;
+
+  --radius-none: 0px;
+  --radius-m: 16px;
+  --radius-pill: 999px;
+
+  --font-primary: "JetBrains Mono", monospace;
+  --font-secondary: "Geist", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-heading: "Newsreader", serif;
+}
+
+[data-theme="dark"] {
+  --background: #111111;
+  --foreground: #ffffff;
+  --primary: #ff8400;
+  --primary-foreground: #111111;
+  --secondary: #2e2e2e;
+  --secondary-foreground: #ffffff;
+  --accent: #111111;
+  --accent-foreground: #f2f3f0;
+  --muted: #2e2e2e;
+  --muted-foreground: #b8b9b6;
+  --card: #1a1a1a;
+  --card-foreground: #ffffff;
+  --popover: #1a1a1a;
+  --popover-foreground: #ffffff;
+  --border: #2e2e2e;
+  --input: #2e2e2e;
+  --ring: #666666;
+  --destructive: #ff5c33;
+
+  --color-error: #24100b;
+  --color-error-foreground: #ff5c33;
+  --color-success: #222924;
+  --color-success-foreground: #b6ffce;
+  --color-warning: #291c0f;
+  --color-warning-foreground: #ff8400;
+  --color-info: #222229;
+  --color-info-foreground: #b2b2ff;
+
+  --sidebar: #18181b;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #18181b;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #2a2a30;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #ffffff1a;
+  --sidebar-ring: #71717a;
+}
