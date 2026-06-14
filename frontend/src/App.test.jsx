@@ -24,10 +24,10 @@ describe("App routes", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders the login placeholder on /login", () => {
+  it("renders the login page on /login", () => {
     renderAt("/login");
     expect(
-      screen.getByRole("heading", { name: /iniciar sesión/i }),
+      screen.getByRole("heading", { name: /iniciá sesión/i }),
     ).toBeInTheDocument();
   });
 });
