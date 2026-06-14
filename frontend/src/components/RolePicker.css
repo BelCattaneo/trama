@@ -1,0 +1,35 @@
+.role-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.role-picker__label {
+  color: var(--foreground-secondary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.role-picker__group {
+  display: flex;
+  gap: 8px;
+}
+
+.role-picker__pill {
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--surface-input);
+  color: var(--foreground-primary);
+  border: 1px solid var(--border-input);
+  cursor: pointer;
+}
+
+.role-picker__pill--selected {
+  background: var(--accent-primary);
+  color: var(--foreground-inverse);
+  border-color: var(--accent-primary);
+}
