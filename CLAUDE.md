@@ -60,6 +60,18 @@ Universal rules:
 
 ---
 
+## Secrets (non-negotiable)
+
+- **NEVER commit** secrets, API keys, tokens, passwords, `.env` files, or any credential file. Also restated in Commits → Hard stops.
+- **NEVER print or log secrets**, even at DEBUG level. No `print(api_key)`. No `logger.debug(f"using key={key}")`. No stack traces that include credentials in their frames.
+- **NEVER paste real keys** into `.env.example`, fixtures, tests, seeds, screenshots, or documentation. Use obvious placeholders (e.g. `OPENAI_API_KEY=sk-REPLACE_ME`).
+- **NEVER echo `.env` contents** into chat, console output, or any visible channel — including when answering "what's in my env?".
+- API responses and error messages must not contain credential values, internal URLs with embedded tokens, or stack traces against external services. Surface a generic message; log the detail server-side (without the secret).
+- Frontend code must not ship server-side keys. Anything the bundle ships is public.
+- If a secret leaks (committed, logged, pasted, screenshotted): **rotate it first**, then clean up the source in a separate commit / PR.
+
+---
+
 ## UX — strong rules
 
 - **DO NOT force normalization on the user.** The system adapts to the existing workflow: if one producer uploads a sheet with column `"verdura"` and another with `"producto"`, both work. Normalization is a backend problem.
