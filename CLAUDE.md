@@ -223,15 +223,5 @@ When the time comes: `docker-compose.yml` with three services — backend, front
 
 ## How to run
 
-_(Fill in as it gets built. Right now, repo is freshly initialized.)_
-
-```bash
-# backend
-cd backend
-uv run uvicorn ...
-
-# frontend
-cd frontend
-npm run dev
-```
+See [README.md](./README.md) Getting started, or `make help` at the repo root.
 
