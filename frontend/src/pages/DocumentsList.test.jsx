@@ -148,4 +148,15 @@ describe("DocumentsList", () => {
     );
     expect(screen.getByText(/upload page/i)).toBeInTheDocument();
   });
+
+  it("aborts the fetch if unmounted before it resolves", async () => {
+    let abortSignal;
+    global.fetch.mockImplementation((_url, init) => {
+      abortSignal = init.signal;
+      return new Promise(() => {});
+    });
+    const { unmount } = renderPage();
+    unmount();
+    expect(abortSignal.aborted).toBe(true);
+  });
 });

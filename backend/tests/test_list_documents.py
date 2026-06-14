@@ -1,45 +1,10 @@
-from uuid import uuid4
-
 import pytest
 import pytest_asyncio
 
 from trama import db
-from trama.sessions import COOKIE_NAME, create_session
+from trama.sessions import COOKIE_NAME
 
-from .conftest import client
-
-
-async def _make_node_with_user():
-    cuit = f"00-{uuid4().hex[:8]}-0"
-    email = f"test-{uuid4().hex[:8]}@example.com"
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                """INSERT INTO node (cuit, display_name, role, latitude, longitude)
-                   VALUES (%s, 'Test Node', 'consumer', -34.6, -58.4)
-                   RETURNING id""",
-                (cuit,),
-            )
-            (node_id,) = await cur.fetchone()
-            await cur.execute(
-                """INSERT INTO app_user (node_id, email, password_hash, full_name)
-                   VALUES (%s, %s, 'never-exposed-hash', 'Test User')
-                   RETURNING id""",
-                (node_id, email),
-            )
-            (uid,) = await cur.fetchone()
-    session = await create_session(uid)
-    return {"node_id": node_id, "user_id": uid, "session_id": session.id}
-
-
-async def _cleanup_node(node_id, user_id):
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                "DELETE FROM document WHERE node_id = %s", (node_id,)
-            )
-            await cur.execute("DELETE FROM app_user WHERE id = %s", (user_id,))
-            await cur.execute("DELETE FROM node WHERE id = %s", (node_id,))
+from .conftest import cleanup_node, client, make_node_with_user
 
 
 async def _insert_document(node_id, filename, mime, uploaded_at_offset_seconds=0):
@@ -58,9 +23,9 @@ async def _insert_document(node_id, filename, mime, uploaded_at_offset_seconds=0
 
 @pytest_asyncio.fixture
 async def setup(pool_lifecycle):
-    data = await _make_node_with_user()
+    data = await make_node_with_user()
     yield data
-    await _cleanup_node(data["node_id"], data["user_id"])
+    await cleanup_node(data["node_id"], data["user_id"])
 
 
 @pytest.mark.asyncio
@@ -108,8 +73,8 @@ async def test_list_unauthenticated_response_body_has_no_documents_key(
 
 @pytest.mark.asyncio
 async def test_node_isolation_user_a_cannot_see_user_b_documents(pool_lifecycle):
-    a = await _make_node_with_user()
-    b = await _make_node_with_user()
+    a = await make_node_with_user()
+    b = await make_node_with_user()
     try:
         await _insert_document(b["node_id"], "b1.pdf", "application/pdf")
         await _insert_document(b["node_id"], "b2.pdf", "application/pdf")
@@ -119,5 +84,5 @@ async def test_node_isolation_user_a_cannot_see_user_b_documents(pool_lifecycle)
         assert response.status_code == 200
         assert response.json() == {"documents": []}
     finally:
-        await _cleanup_node(a["node_id"], a["user_id"])
-        await _cleanup_node(b["node_id"], b["user_id"])
+        await cleanup_node(a["node_id"], a["user_id"])
+        await cleanup_node(b["node_id"], b["user_id"])

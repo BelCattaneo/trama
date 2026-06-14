@@ -4,7 +4,7 @@ import RequireAuth from "./components/RequireAuth";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import DocumentsList from "./pages/DocumentsList";
-import OrdersList from "./pages/OrdersList";
+import OperationsList from "./pages/OperationsList";
 import Signup from "./pages/Signup";
 import Upload from "./pages/Upload";
 
@@ -48,7 +48,7 @@ export default function App() {
         path="/operations"
         element={
           <RequireAuth>
-            <OrdersList />
+            <OperationsList />
           </RequireAuth>
         }
       />

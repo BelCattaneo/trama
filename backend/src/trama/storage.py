@@ -3,8 +3,6 @@ import re
 from pathlib import Path
 from typing import Protocol
 
-from fastapi import Request
-
 _HASH_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -29,10 +27,14 @@ class LocalStorage:
         if final.exists():
             return ref
         tmp = prefix_dir / f"{content_hash}.tmp"
-        tmp.write_bytes(content)
-        with tmp.open("rb") as f:
-            os.fsync(f.fileno())
-        tmp.rename(final)
+        try:
+            tmp.write_bytes(content)
+            with tmp.open("rb") as f:
+                os.fsync(f.fileno())
+            tmp.rename(final)
+        except Exception:
+            tmp.unlink(missing_ok=True)
+            raise
         return ref
 
     def get(self, ref: str) -> bytes:
@@ -47,7 +49,3 @@ def _safe_ref(ref: str) -> Path:
     if p.is_absolute() or ".." in p.parts:
         raise ValueError("invalid ref")
     return p
-
-
-def get_storage(request: Request) -> Storage:
-    return request.app.state.storage

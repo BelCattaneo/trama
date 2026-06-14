@@ -1,12 +1,12 @@
 from datetime import datetime
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from trama import db
-from trama.sessions import current_user
+from trama.sessions import AuthUser, require_user
 
 
 class UserOut(BaseModel):
@@ -36,10 +36,7 @@ router = APIRouter(prefix="/api")
 
 
 @router.get("/me", response_model=MeResponse)
-async def get_me(request: Request):
-    user = await current_user(request)
-    if user is None:
-        return JSONResponse({"error": "no autenticado"}, status_code=401)
+async def get_me(user: Annotated[AuthUser, Depends(require_user)]):
     async with db.pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(

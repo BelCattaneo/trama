@@ -1,17 +1,16 @@
 import NavBarAuth from "../components/NavBarAuth";
 import { useAuth } from "../contexts/AuthContext";
 import { operationLabels } from "../lib/roleLabels";
+import "./OperationsList.css";
 
-export default function OrdersList() {
+export default function OperationsList() {
   const { user } = useAuth();
   const labels = operationLabels(user?.node?.role);
   return (
     <div className="page-shell">
       <NavBarAuth />
-      <main style={{ flex: 1, padding: "48px 80px" }}>
-        <h1 style={{ fontFamily: "var(--font-heading)", fontWeight: 500 }}>
-          {labels.nav}
-        </h1>
+      <main className="operations-page__content">
+        <h1 className="operations-page__title">{labels.nav}</h1>
       </main>
     </div>
   );
