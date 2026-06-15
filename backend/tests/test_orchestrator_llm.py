@@ -172,6 +172,74 @@ async def test_invalid_json_response_persists_failed_attempt(setup, monkeypatch)
 
 
 @pytest.mark.asyncio
+async def test_corrupt_pdf_persists_preprocess_failed_attempt(setup, monkeypatch):
+    payload = {"lines": [], "warnings": []}
+    _stub_with_response(monkeypatch, payload)
+
+    corrupt = b"%PDF-1.4\nnot really a pdf\n"
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.post(
+            "/api/documents",
+            files={"file": ("bad.pdf", corrupt, "application/octet-stream")},
+        )
+
+    assert response.status_code == 201
+    attempt = response.json()["parse_attempt"]
+    assert attempt["strategy"] == "llm"
+    assert attempt["confidence"] == 0.0
+    assert attempt["payload"] is None
+    assert attempt["error_message"].startswith("preprocess failed: ")
+
+
+@pytest.mark.asyncio
+async def test_pdf_mixed_page_success_and_failure(setup, monkeypatch):
+    clean_payload = {
+        "lines": [
+            {"product": "tomate", "quantity": 1.0, "unit": "kg", "raw_text": "t"}
+        ],
+        "warnings": [],
+    }
+
+    calls = {"count": 0}
+
+    class _MixedClient:
+        async def parse_image(self, image_bytes: bytes, prompt: str) -> dict:
+            calls["count"] += 1
+            if calls["count"] == 2:
+                raise RuntimeError("simulated page 2 crash")
+            return {
+                "text": json.dumps(clean_payload),
+                "usage": {
+                    "prompt_tokens": 1,
+                    "completion_tokens": 1,
+                    "total_tokens": 2,
+                },
+                "response_id": None,
+            }
+
+    monkeypatch.setattr(
+        "trama.parsing.orchestrator.get_llm_client", lambda: _MixedClient()
+    )
+
+    pdf = _make_multipage_pdf(3)
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.post(
+            "/api/documents",
+            files={"file": ("mixed.pdf", pdf, "application/octet-stream")},
+        )
+
+    attempt = response.json()["parse_attempt"]
+    assert attempt["strategy"] == "llm"
+    pages_with_lines = [line["page"] for line in attempt["payload"]["lines"]]
+    assert pages_with_lines == [1, 3]
+    warnings = attempt["payload"]["warnings"]
+    assert any("[p2] página falló" in w for w in warnings)
+    assert attempt["error_message"] is None
+
+
+@pytest.mark.asyncio
 async def test_reparse_llm_document_creates_new_attempt(setup, monkeypatch):
     payload = {
         "lines": [
