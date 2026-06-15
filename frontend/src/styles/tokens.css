@@ -50,11 +50,13 @@
 
   --surface-primary: #f5f3ee;
   --surface-card: #ffffff;
+  --surface-card-hover: #f5f3ee;
   --surface-input: #ffffff;
   --surface-inverse: #1b3a28;
 
   --border-input: #c2ccbe;
   --border-subtle: #d6ddd0;
+  --border-default: #c2ccbe;
 
   --confidence-high: #2d7a3a;
   --confidence-medium: #b8860b;
