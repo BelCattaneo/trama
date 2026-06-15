@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ExternalLink, Loader } from "lucide-react";
+import { ArrowLeft, Download, ExternalLink, Loader } from "lucide-react";
 import NavBarAuth from "../components/NavBarAuth";
 import { apiGet } from "../lib/api";
+import { buildOperationCsv, buildOperationFilename } from "../lib/csv";
 import "./OrderDetail.css";
 
 const dateFormatter = new Intl.DateTimeFormat("es-AR", {
@@ -98,6 +99,24 @@ export default function OrderDetail() {
   const lines = body.lines ?? [];
   const showPageColumn = lines.some((line) => line.page !== null);
 
+  function onDownloadCsv() {
+    const content = buildOperationCsv(lines);
+    const filename = buildOperationFilename({
+      kind: body.kind,
+      operationDate: body.operation_date,
+      id: body.id,
+    });
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="page-shell order-detail">
       <NavBarAuth />
@@ -108,17 +127,28 @@ export default function OrderDetail() {
               <ArrowLeft size={16} aria-hidden="true" />
               <span>volver</span>
             </Link>
-            {body.document_id && (
-              <a
-                className="order-detail__file-link"
-                href={`/api/documents/${body.document_id}/file`}
-                target="_blank"
-                rel="noopener noreferrer"
+            <div className="order-detail__header-actions">
+              <button
+                type="button"
+                className="order-detail__csv-link"
+                onClick={onDownloadCsv}
+                disabled={lines.length === 0}
               >
-                <ExternalLink size={16} aria-hidden="true" />
-                <span>ver archivo original</span>
-              </a>
-            )}
+                <Download size={16} aria-hidden="true" />
+                <span>descargar CSV</span>
+              </button>
+              {body.document_id && (
+                <a
+                  className="order-detail__file-link"
+                  href={`/api/documents/${body.document_id}/file`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink size={16} aria-hidden="true" />
+                  <span>ver archivo original</span>
+                </a>
+              )}
+            </div>
           </div>
           <dl className="order-detail__meta">
             <div className="order-detail__meta-item">

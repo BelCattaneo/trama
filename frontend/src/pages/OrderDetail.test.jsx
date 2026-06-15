@@ -243,4 +243,60 @@ describe("OrderDetail", () => {
     unmount();
     expect(abortSignal.aborted).toBe(true);
   });
+
+  it("downloads CSV with role-prefixed filename when the button is clicked", async () => {
+    const createObjectURL = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValue("blob:fake");
+    const revokeObjectURL = vi
+      .spyOn(URL, "revokeObjectURL")
+      .mockImplementation(() => {});
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
+
+    renderPage({
+      fetchImpl: () =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ...makeOperation({
+              id: "a1b2c3d4e5f6",
+              operation_date: "2026-06-15",
+            }),
+            kind: "offer",
+          }),
+        }),
+    });
+    const button = await screen.findByRole("button", {
+      name: /descargar csv/i,
+    });
+    fireEvent.click(button);
+
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    const [blob] = createObjectURL.mock.calls[0];
+    expect(blob).toBeInstanceOf(Blob);
+    expect(blob.type).toMatch(/text\/csv/);
+
+    const anchor = clickSpy.mock.instances[0];
+    expect(anchor.download).toBe("oferta_2026-06-15_a1b2c3d4.csv");
+    expect(anchor.href).toBe("blob:fake");
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:fake");
+  });
+
+  it("disables the CSV button when there are no lines", async () => {
+    renderPage({
+      fetchImpl: () =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => makeOperation({ lines: [] }),
+        }),
+    });
+    const button = await screen.findByRole("button", {
+      name: /descargar csv/i,
+    });
+    expect(button).toBeDisabled();
+  });
 });
