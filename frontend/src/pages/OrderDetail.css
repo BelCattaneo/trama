@@ -46,7 +46,15 @@
   border-radius: 4px;
 }
 
-.order-detail__file-link {
+.order-detail__header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.order-detail__file-link,
+.order-detail__csv-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -54,16 +62,29 @@
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
 }
 
-.order-detail__file-link:hover {
+.order-detail__file-link:hover,
+.order-detail__csv-link:hover {
   text-decoration: underline;
 }
 
-.order-detail__file-link:focus-visible {
+.order-detail__file-link:focus-visible,
+.order-detail__csv-link:focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+.order-detail__csv-link:disabled {
+  color: var(--foreground-secondary);
+  cursor: not-allowed;
+  text-decoration: none;
 }
 
 .order-detail__meta {
