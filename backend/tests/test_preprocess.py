@@ -91,14 +91,16 @@ def test_small_image_still_reencoded_as_jpeg(small_jpeg_bytes):
 
 
 def test_pdf_three_pages_returns_three_pngs(pdf_3_pages):
-    pages = pdf_to_images(pdf_3_pages)
+    pages, truncated = pdf_to_images(pdf_3_pages)
     assert len(pages) == 3
+    assert truncated is False
     for page in pages:
         assert page.startswith(PNG_MAGIC)
 
 
 def test_pdf_fifteen_pages_capped_at_ten(pdf_15_pages):
-    pages = pdf_to_images(pdf_15_pages)
+    pages, truncated = pdf_to_images(pdf_15_pages)
     assert len(pages) == MAX_PDF_PAGES == 10
+    assert truncated is True
     for page in pages:
         assert page.startswith(PNG_MAGIC)
