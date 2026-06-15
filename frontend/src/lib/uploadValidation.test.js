@@ -26,6 +26,18 @@ describe("validateClientFile", () => {
     });
   });
 
+  it("accepts heic by mime type", () => {
+    expect(
+      validateClientFile(makeFile("foto.heic", 100, "image/heic")),
+    ).toEqual({ ok: true });
+  });
+
+  it("accepts heic by extension when mime is missing", () => {
+    expect(validateClientFile(makeFile("foto.heic", 100, ""))).toEqual({
+      ok: true,
+    });
+  });
+
   it("rejects when neither mime nor extension matches", () => {
     const result = validateClientFile(makeFile("notes.txt", 100, "text/plain"));
     expect(result.ok).toBe(false);

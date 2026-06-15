@@ -133,7 +133,7 @@ export default function Upload() {
         )}
 
         <p id="upload-formats-hint" className="upload-page__formats">
-          Formatos aceptados: xlsx, csv, jpg, png, pdf · Máximo 10 MB
+          Formatos aceptados: xlsx, csv, jpg, png, heic, pdf · Máximo 10 MB
         </p>
 
         {uploading && (

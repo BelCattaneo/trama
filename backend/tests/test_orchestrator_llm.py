@@ -172,6 +172,26 @@ async def test_invalid_json_response_persists_failed_attempt(setup, monkeypatch)
 
 
 @pytest.mark.asyncio
+async def test_heic_upload_persists_and_routes_through_llm(setup, monkeypatch):
+    """Catches the E5 regression where document.mime_type CHECK rejected image/heic."""
+    payload = {"lines": [], "warnings": []}
+    _stub_with_response(monkeypatch, payload)
+
+    heic = b"\x00\x00\x00\x20ftypheic" + b"\x00" * 24
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.post(
+            "/api/documents",
+            files={"file": ("foto.heic", heic, "application/octet-stream")},
+        )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["document"]["mime_type"] == "image/heic"
+    assert body["parse_attempt"]["strategy"] == "llm"
+
+
+@pytest.mark.asyncio
 async def test_corrupt_pdf_persists_preprocess_failed_attempt(setup, monkeypatch):
     payload = {"lines": [], "warnings": []}
     _stub_with_response(monkeypatch, payload)

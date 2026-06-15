@@ -6,6 +6,8 @@ export const ACCEPTED_EXTENSIONS = [
   ".jpg",
   ".jpeg",
   ".png",
+  ".heic",
+  ".heif",
   ".pdf",
 ];
 
@@ -14,6 +16,8 @@ const ACCEPTED_MIMES = new Set([
   "text/csv",
   "image/jpeg",
   "image/png",
+  "image/heic",
+  "image/heif",
   "application/pdf",
 ]);
 
@@ -27,7 +31,7 @@ export function validateClientFile(file) {
   if (!isAcceptedFile(file)) {
     return {
       ok: false,
-      error: "Formato no soportado. Aceptamos xlsx, csv, jpg, png o pdf.",
+      error: "Formato no soportado. Aceptamos xlsx, csv, jpg, png, heic o pdf.",
     };
   }
   if (file.size > MAX_BYTES) {
