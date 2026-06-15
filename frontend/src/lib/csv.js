@@ -1,8 +1,14 @@
 const BOM = "﻿";
 const CSV_HEADER = "producto,cantidad,unidad";
+// Excel/LibreOffice evaluate leading =+-@ \t \r as formulas. Producer-uploaded
+// data flows into product names, so neutralize the lead char before escaping.
+const FORMULA_LEAD = /^[=+\-@\t\r]/;
 
 function escapeField(value) {
-  const str = String(value ?? "");
+  let str = String(value ?? "");
+  if (FORMULA_LEAD.test(str)) {
+    str = `'${str}`;
+  }
   if (/[",\n\r]/.test(str)) {
     return `"${str.replace(/"/g, '""')}"`;
   }

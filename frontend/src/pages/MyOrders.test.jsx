@@ -47,6 +47,7 @@ function renderPage(initialEntries = ["/my-orders"]) {
         <Routes>
           <Route path="/my-orders" element={<MyOrders />} />
           <Route path="/my-orders/:id" element={<div>detail page</div>} />
+          <Route path="/login" element={<div>login page</div>} />
           <Route path="/upload" element={<div>upload page</div>} />
         </Routes>
       </AuthProvider>
@@ -58,7 +59,7 @@ function mockOperationsResponse(operations) {
   global.fetch.mockResolvedValue({
     ok: true,
     status: 200,
-    json: async () => ({ operations }),
+    json: async () => ({ items: operations, total: operations.length }),
   });
 }
 
@@ -85,7 +86,7 @@ describe("MyOrders", () => {
       resolve({
         ok: true,
         status: 200,
-        json: async () => ({ operations: [] }),
+        json: async () => ({ items: [], total: 0 }),
       });
     });
     await waitFor(() => {
@@ -188,6 +189,36 @@ describe("MyOrders", () => {
     const detailLinks = screen.getAllByRole("link", { name: /ver detalle/i });
     fireEvent.click(detailLinks[0]);
     expect(screen.getByText(/detail page/i)).toBeInTheDocument();
+  });
+
+  it("renders 'oferta' label for kind: 'offer'", async () => {
+    mockOperationsResponse([
+      {
+        id: "op-offer",
+        operation_date: "2026-03-17",
+        line_count: 2,
+        kind: "offer",
+        confirmed_at: "2026-03-17T18:00:00Z",
+      },
+    ]);
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByTestId("row-op-offer")).toBeInTheDocument();
+    });
+    const row = screen.getByTestId("row-op-offer");
+    expect(within(row).getAllByText(/oferta/i).length).toBeGreaterThan(0);
+  });
+
+  it("redirects to /login on 401", async () => {
+    global.fetch.mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({ error: "no autenticado" }),
+    });
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText(/login page/i)).toBeInTheDocument();
+    });
   });
 
   it("aborts the fetch if unmounted before it resolves", async () => {
