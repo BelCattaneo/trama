@@ -1,6 +1,8 @@
+import io
 from collections.abc import Callable
-from dataclasses import dataclass
 from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
 
 from trama import db
 from trama.parsing._extract import ParseError
@@ -11,14 +13,21 @@ from trama.parsing.xlsx_parser import parse_xlsx
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 CSV_MIME = "text/csv"
 
+CONFIDENCE_EMPTY_LINES = 0.3
+CONFIDENCE_NOISY = 0.5
+CONFIDENCE_HAS_WARNINGS = 0.8
+CONFIDENCE_CLEAN = 1.0
+NOISY_WARNING_RATIO = 0.5
+
 _DETERMINISTIC_PARSERS: dict[str, Callable[[object], ParsePayload]] = {
     XLSX_MIME: parse_xlsx,
     CSV_MIME: parse_csv,
 }
 
 
-@dataclass(frozen=True)
-class ParseResult:
+class ParseResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     strategy: str
     confidence: float
     payload: ParsePayload | None
@@ -30,18 +39,15 @@ def _compute_confidence(payload: ParsePayload) -> float:
     lines = len(payload.lines)
     warnings = len(payload.warnings)
     if lines == 0:
-        return 0.3
-    total = lines + warnings
-    if total > 0 and warnings / total >= 0.5:
-        return 0.5
+        return CONFIDENCE_EMPTY_LINES
+    if warnings / (lines + warnings) >= NOISY_WARNING_RATIO:
+        return CONFIDENCE_NOISY
     if warnings > 0:
-        return 0.8
-    return 1.0
+        return CONFIDENCE_HAS_WARNINGS
+    return CONFIDENCE_CLEAN
 
 
 def _run_deterministic(mime_type: str, contents: bytes) -> ParseResult:
-    import io
-
     parser = _DETERMINISTIC_PARSERS[mime_type]
     try:
         payload = parser(io.BytesIO(contents))
@@ -85,10 +91,7 @@ async def _persist(document_id: UUID, result: ParseResult) -> UUID:
 async def run_parse(
     document_id: UUID, mime_type: str, contents: bytes
 ) -> tuple[UUID, ParseResult] | None:
-    """Dispatch to the right parser by mime type, persist a parse_attempt.
-    Returns (attempt_id, ParseResult) when a parser ran; None for mime types
-    without a parser yet (pdf, jpeg, png).
-    """
+    """Dispatch by mime, persist the parse_attempt. None for unparseable mimes."""
     if mime_type not in _DETERMINISTIC_PARSERS:
         return None
     result = _run_deterministic(mime_type, contents)

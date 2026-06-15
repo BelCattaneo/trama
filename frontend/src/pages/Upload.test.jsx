@@ -89,11 +89,14 @@ describe("Upload", () => {
     expect(drop.className).not.toMatch(/upload-page__drop--active/);
   });
 
-  it("navigates to /documents on 201", async () => {
+  it("navigates to /documents on 201 with successful parse", async () => {
     global.fetch.mockResolvedValue({
       status: 201,
       ok: true,
-      json: async () => ({ id: "doc-1" }),
+      json: async () => ({
+        document: { id: "doc-1", mime_type: "application/pdf" },
+        parse_attempt: null,
+      }),
     });
     renderUpload();
     const input = screen.getByLabelText(/seleccionar archivo/i);
@@ -106,6 +109,33 @@ describe("Upload", () => {
       "/api/documents",
       expect.objectContaining({ method: "POST" }),
     );
+  });
+
+  it("shows parse error_message and stays on page when confidence is 0", async () => {
+    global.fetch.mockResolvedValue({
+      status: 201,
+      ok: true,
+      json: async () => ({
+        document: { id: "doc-1" },
+        parse_attempt: {
+          id: "att-1",
+          strategy: "deterministic",
+          confidence: 0,
+          payload: null,
+          error_message: "no se encontraron columnas reconocidas",
+        },
+      }),
+    });
+    renderUpload();
+    const input = screen.getByLabelText(/seleccionar archivo/i);
+    const file = makeFile("pedido.pdf", 1024, "application/pdf");
+    fireEvent.change(input, { target: { files: [file] } });
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        /no se encontraron columnas reconocidas/i,
+      );
+    });
+    expect(screen.queryByText(/documents page/i)).not.toBeInTheDocument();
   });
 
   it("shows backend 400 error message", async () => {

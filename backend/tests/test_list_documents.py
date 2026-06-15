@@ -22,10 +22,8 @@ async def _insert_document(node_id, filename, mime, uploaded_at_offset_seconds=0
 
 
 @pytest_asyncio.fixture
-async def setup(pool_lifecycle):
-    data = await make_node_with_user()
-    yield data
-    await cleanup_node(data["node_id"], data["user_id"])
+async def setup(node_user):
+    yield node_user
 
 
 @pytest.mark.asyncio

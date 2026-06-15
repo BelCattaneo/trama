@@ -35,6 +35,15 @@ export default function Upload() {
     try {
       const response = await apiPostForm("/api/documents", formData);
       if (response.status === 201) {
+        const body = await response.json().catch(() => null);
+        const attempt = body?.parse_attempt;
+        if (attempt && attempt.confidence === 0) {
+          setError(
+            attempt.error_message ||
+              "Subimos el archivo pero no pudimos interpretarlo.",
+          );
+          return;
+        }
         navigate("/documents");
         return;
       }

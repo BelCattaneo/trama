@@ -79,3 +79,11 @@ async def cleanup_node(node_id, user_id) -> None:
             )
             await cur.execute("DELETE FROM app_user WHERE id = %s", (user_id,))
             await cur.execute("DELETE FROM node WHERE id = %s", (node_id,))
+
+
+@pytest_asyncio.fixture
+async def node_user(pool_lifecycle):
+    """Create a node + user + session, yield it, then cascade-clean."""
+    data = await make_node_with_user()
+    yield data
+    await cleanup_node(data["node_id"], data["user_id"])

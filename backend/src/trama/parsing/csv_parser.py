@@ -31,5 +31,8 @@ def parse_csv(stream: BinaryIO) -> ParsePayload:
         raise ParseError("no se encontraron columnas reconocidas")
 
     delimiter = _detect_delimiter(lines[0])
-    rows = list(csv.reader(lines, delimiter=delimiter))
+    try:
+        rows = list(csv.reader(lines, delimiter=delimiter))
+    except csv.Error as exc:
+        raise ParseError("csv inválido") from exc
     return extract_payload(rows)
