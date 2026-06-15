@@ -14,9 +14,7 @@ def _detect_delimiter(first_line: str) -> str:
 
 
 def parse_csv(stream: BinaryIO) -> ParsePayload:
-    """Parse a UTF-8 CSV stream into a ParsePayload.
-    Raises ParseError if encoding is not UTF-8 or headers cannot be detected.
-    """
+    """Parse a UTF-8 CSV stream into a ParsePayload."""
     data = stream.read()
     try:
         text = data.decode("utf-8-sig")

@@ -32,12 +32,7 @@ _SYNONYMS = _load_synonyms()
 
 
 def canonicalize_columns(headers: list[str]) -> dict[str, str]:
-    """Map raw headers to canonical field names.
-
-    Returns {raw_header: canonical_field} for headers that match a synonym.
-    Headers that did not match are omitted. The caller is responsible for
-    checking REQUIRED_FIELDS against the returned values.
-    """
+    """Map raw headers to canonical field names, dropping unrecognized headers."""
     result: dict[str, str] = {}
     for header in headers:
         normalized = _normalize(header)

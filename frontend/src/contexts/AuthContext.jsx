@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { apiGet, apiPost } from "../lib/api";
@@ -31,41 +32,23 @@ export function AuthProvider({ children, initialUser = undefined }) {
 
   useEffect(() => {
     if (initialUser !== undefined) return;
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        const response = await apiGet("/api/me");
-        if (cancelled) return;
-        if (response.ok) {
-          setUser(await response.json());
-        } else {
-          setUser(null);
-        }
-      } catch {
-        if (!cancelled) setUser(null);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [initialUser]);
+    refresh();
+  }, [initialUser, refresh]);
 
-  async function logout() {
+  const logout = useCallback(async () => {
     try {
       await apiPost("/api/auth/logout");
     } finally {
       setUser(null);
     }
-  }
+  }, []);
 
-  return (
-    <AuthContext.Provider value={{ user, loading, logout, refresh }}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({ user, loading, logout, refresh }),
+    [user, loading, logout, refresh],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
