@@ -33,6 +33,17 @@ class ParseAttemptOut(BaseModel):
     error_message: str | None
 
 
+class ReviewParseAttemptOut(BaseModel):
+    id: UUID
+    strategy: str
+    confidence: float
+    payload: ParsePayload | None
+    prompt_version: str | None
+    error_message: str | None
+    is_winner: bool
+    created_at: datetime
+
+
 class UploadResponse(BaseModel):
     document: DocumentOut
     parse_attempt: ParseAttemptOut | None
@@ -44,6 +55,11 @@ class DocumentsListResponse(BaseModel):
 
 class ReparseResponse(BaseModel):
     parse_attempt: ParseAttemptOut
+
+
+class ReviewResponse(BaseModel):
+    document: DocumentOut
+    parse_attempt: ReviewParseAttemptOut | None
 
 
 _HEIC_BRANDS = (b"heic", b"heix", b"hevc", b"mif1")
@@ -207,3 +223,56 @@ async def reparse_document(
         error_message=result.error_message,
     )
     return ReparseResponse(parse_attempt=parse_attempt)
+
+
+@router.get("/documents/{document_id}/review", response_model=ReviewResponse)
+async def review_document(
+    document_id: UUID,
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> ReviewResponse:
+    async with db.pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """SELECT id, original_filename, mime_type, size_bytes,
+                          content_hash, uploaded_at
+                   FROM document
+                   WHERE id = %s AND node_id = %s""",
+                (document_id, user.node_id),
+            )
+            doc_row = await cur.fetchone()
+            if doc_row is None:
+                raise HTTPException(
+                    status_code=404, detail="documento no encontrado"
+                )
+            await cur.execute(
+                """SELECT id, strategy, confidence, payload, prompt_version,
+                          error_message, is_winner, created_at
+                   FROM parse_attempt
+                   WHERE document_id = %s
+                   ORDER BY created_at DESC
+                   LIMIT 1""",
+                (document_id,),
+            )
+            attempt_row = await cur.fetchone()
+
+    document = DocumentOut(
+        id=doc_row[0],
+        original_filename=doc_row[1],
+        mime_type=doc_row[2],
+        size_bytes=doc_row[3],
+        content_hash=doc_row[4],
+        uploaded_at=doc_row[5],
+    )
+    parse_attempt = None
+    if attempt_row is not None:
+        parse_attempt = ReviewParseAttemptOut(
+            id=attempt_row[0],
+            strategy=attempt_row[1],
+            confidence=attempt_row[2],
+            payload=attempt_row[3],
+            prompt_version=attempt_row[4],
+            error_message=attempt_row[5],
+            is_winner=attempt_row[6],
+            created_at=attempt_row[7],
+        )
+    return ReviewResponse(document=document, parse_attempt=parse_attempt)
