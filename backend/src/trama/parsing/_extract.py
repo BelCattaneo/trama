@@ -2,6 +2,9 @@ from trama.parsing.columns import REQUIRED_FIELDS, canonicalize_columns
 from trama.parsing.schema import ParseLine, ParsePayload
 
 _HEADER_SCAN_ROWS = 5
+_MAX_LINES = 10_000
+_MAX_WARNINGS = 10_000
+_RAW_TEXT_MAX_CHARS = 2_000
 
 
 class ParseError(Exception):
@@ -31,9 +34,6 @@ def _row_is_empty(row) -> bool:
 
 
 def _find_header(rows: list[list]) -> tuple[int, dict[str, str]]:
-    """Scan the first N rows for one whose headers cover REQUIRED_FIELDS.
-    Returns (header_row_index, {raw_header: canonical_field}).
-    """
     for idx, row in enumerate(rows[:_HEADER_SCAN_ROWS]):
         if _row_is_empty(row):
             continue
@@ -43,11 +43,27 @@ def _find_header(rows: list[list]) -> tuple[int, dict[str, str]]:
     raise ParseError("no se encontraron columnas reconocidas")
 
 
+def _build_canonical_raw_text(
+    canonical_by_col_idx: dict[int, str], row: list
+) -> str | None:
+    parts: list[str] = []
+    for col_idx in sorted(canonical_by_col_idx):
+        if col_idx >= len(row):
+            continue
+        cell = row[col_idx]
+        text = "" if cell is None else str(cell).strip()
+        if text:
+            parts.append(text)
+    if not parts:
+        return None
+    joined = " | ".join(parts)
+    if len(joined) > _RAW_TEXT_MAX_CHARS:
+        joined = joined[:_RAW_TEXT_MAX_CHARS]
+    return joined
+
+
 def extract_payload(rows: list[list]) -> ParsePayload:
-    """Build a ParsePayload from a list of rows (each row is a list of cells).
-    Shared core for xlsx and csv parsers. Raises ParseError if no header is
-    found in the first 5 rows.
-    """
+    """Convert tabular rows into a validated ParsePayload."""
     if not rows:
         raise ParseError("no se encontraron columnas reconocidas")
 
@@ -60,9 +76,13 @@ def extract_payload(rows: list[list]) -> ParsePayload:
 
     lines: list[ParseLine] = []
     warnings: list[str] = []
+    truncated = False
 
     for row_offset, row in enumerate(rows[header_idx + 1 :], start=1):
-        row_num = header_idx + 1 + row_offset  # 1-indexed for users
+        if len(lines) >= _MAX_LINES:
+            truncated = True
+            break
+        row_num = header_idx + 1 + row_offset
         if _row_is_empty(row):
             continue
 
@@ -74,36 +94,41 @@ def extract_payload(rows: list[list]) -> ParsePayload:
         product = fields.get("product")
         product_str = "" if product is None else str(product).strip()
         if not product_str:
-            warnings.append(f"fila {row_num} sin producto, saltada")
+            if len(warnings) < _MAX_WARNINGS:
+                warnings.append(f"fila {row_num} sin producto, saltada")
             continue
 
         raw_qty = fields.get("quantity")
         if raw_qty is None or (isinstance(raw_qty, str) and not raw_qty.strip()):
-            warnings.append(f"fila {row_num} sin cantidad, saltada")
+            if len(warnings) < _MAX_WARNINGS:
+                warnings.append(f"fila {row_num} sin cantidad, saltada")
             continue
         quantity = _parse_quantity(raw_qty)
         if quantity is None:
-            warnings.append(
-                f"fila {row_num} con cantidad inválida: '{raw_qty}', saltada"
-            )
+            if len(warnings) < _MAX_WARNINGS:
+                warnings.append(
+                    f"fila {row_num} con cantidad inválida: '{raw_qty}', saltada"
+                )
             continue
 
         unit_value = fields.get("unit")
-        unit = (
-            str(unit_value).strip()
-            if unit_value is not None and str(unit_value).strip()
-            else None
-        )
+        unit_text = str(unit_value).strip() if unit_value is not None else ""
+        unit = unit_text or None
 
-        raw_text = " | ".join(_row_to_strings(row)).strip(" |")
+        raw_text = _build_canonical_raw_text(canonical_by_col_idx, row)
 
         lines.append(
             ParseLine(
                 product=product_str,
                 quantity=quantity,
                 unit=unit,
-                raw_text=raw_text or None,
+                raw_text=raw_text,
             )
+        )
+
+    if truncated:
+        warnings.append(
+            f"el documento excede el máximo de {_MAX_LINES} filas y se cortó"
         )
 
     return ParsePayload(lines=lines, warnings=warnings)

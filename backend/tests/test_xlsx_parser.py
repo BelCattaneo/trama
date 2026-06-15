@@ -84,6 +84,14 @@ def test_no_recognizable_headers_raises():
     assert "no se encontraron columnas reconocidas" in str(exc.value)
 
 
+def test_corrupt_zip_raises_parse_error():
+    # Magic prefix of xlsx but body is not a valid zip
+    corrupt = io.BytesIO(b"PK\x03\x04" + b"xl/" + b"\x00" * 20)
+    with pytest.raises(ParseError) as exc:
+        parse_xlsx(corrupt)
+    assert "archivo xlsx inválido" in str(exc.value)
+
+
 def test_quantity_parsing_handles_int_float_string():
     # Build a tiny xlsx on the fly
     from openpyxl import Workbook

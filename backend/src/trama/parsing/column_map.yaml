@@ -10,6 +10,8 @@ product:
   - fruta
   - producto/servicio
 quantity:
+  # 'unidades' lives here (not under unit) because rioplatense planillas use it
+  # as a count column ("3 unidades de tomate") more often than as a unit name.
   - cantidad
   - cant
   - qty

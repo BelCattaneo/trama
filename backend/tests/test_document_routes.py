@@ -8,7 +8,7 @@ import pytest_asyncio
 from trama import db
 from trama.sessions import COOKIE_NAME
 
-from .conftest import cleanup_node, client, make_node_with_user
+from .conftest import client
 
 
 def make_xlsx_bytes(payload: bytes = b"<xml/>") -> bytes:
@@ -26,10 +26,8 @@ HEIC_BYTES = b"\x00\x00\x00\x20ftypheic\x00" * 4
 
 
 @pytest_asyncio.fixture
-async def setup(pool_lifecycle):
-    data = await make_node_with_user()
-    yield data
-    await cleanup_node(data["node_id"], data["user_id"])
+async def setup(node_user):
+    yield node_user
 
 
 @pytest.mark.asyncio

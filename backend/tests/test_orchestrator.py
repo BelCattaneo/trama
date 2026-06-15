@@ -18,10 +18,8 @@ def _fixture_bytes(name: str) -> bytes:
 
 
 @pytest_asyncio.fixture
-async def setup(pool_lifecycle):
-    data = await make_node_with_user()
-    yield data
-    await cleanup_node(data["node_id"], data["user_id"])
+async def setup(node_user):
+    yield node_user
 
 
 # ---------- confidence formula ----------
@@ -51,6 +49,14 @@ def test_confidence_more_warnings_than_half_returns_05():
     payload = ParsePayload.model_validate_json(
         '{"lines":[{"product":"x","quantity":1.0}],'
         '"warnings":["w1","w2","w3"]}'
+    )
+    assert _compute_confidence(payload) == 0.5
+
+
+def test_confidence_exactly_half_warnings_returns_05():
+    # 1 line + 1 warning → ratio is exactly 0.5; the >= 0.5 branch wins.
+    payload = ParsePayload.model_validate_json(
+        '{"lines":[{"product":"x","quantity":1.0}],"warnings":["w1"]}'
     )
     assert _compute_confidence(payload) == 0.5
 
@@ -94,6 +100,30 @@ def test_run_deterministic_csv_standard_confidence_10():
     result = _run_deterministic("text/csv", _fixture_bytes("standard.csv"))
     assert result.confidence == 1.0
     assert len(result.payload.lines) == 5
+
+
+# ---------- run_parse dispatch ----------
+
+
+@pytest.mark.asyncio
+async def test_run_parse_returns_none_for_pdf(pool_lifecycle):
+    from trama.parsing.orchestrator import run_parse
+
+    assert await run_parse(None, "application/pdf", b"%PDF-1.4\n") is None
+
+
+@pytest.mark.asyncio
+async def test_run_parse_returns_none_for_jpeg(pool_lifecycle):
+    from trama.parsing.orchestrator import run_parse
+
+    assert await run_parse(None, "image/jpeg", b"\xff\xd8\xff") is None
+
+
+@pytest.mark.asyncio
+async def test_run_parse_returns_none_for_png(pool_lifecycle):
+    from trama.parsing.orchestrator import run_parse
+
+    assert await run_parse(None, "image/png", b"\x89PNG\r\n\x1a\n") is None
 
 
 # ---------- integration via /api/documents ----------
@@ -264,6 +294,54 @@ async def test_reparse_unauthenticated(pool_lifecycle):
         response = await c.post(f"/api/documents/{uuid4()}/reparse")
     assert response.status_code == 401
     assert response.json() == {"error": "no autenticado"}
+
+
+@pytest.mark.asyncio
+async def test_upload_response_does_not_expose_prompt_version(setup):
+    """ParseAttemptOut must whitelist payload fields; prompt_version is internal."""
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.post(
+            "/api/documents",
+            files={
+                "file": (
+                    "p.xlsx",
+                    _fixture_bytes("standard.xlsx"),
+                    "application/octet-stream",
+                )
+            },
+        )
+    assert "prompt_version" not in response.text
+
+
+@pytest.mark.asyncio
+async def test_low_confidence_stays_deterministic_no_fallback(setup):
+    """Even with 0 lines parsed and confidence 0.3, strategy stays 'deterministic'.
+    LLM fallback ships in E5; until then the orchestrator does not escalate.
+    """
+    # All-rows-skipped xlsx: headers OK, but every row missing product
+    from openpyxl import Workbook
+
+    wb = Workbook()
+    ws = wb.active
+    ws.append(["Producto", "Cantidad", "Unidad"])
+    for _ in range(3):
+        ws.append(["", 1, "kg"])
+    import io as _io
+
+    buf = _io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.post(
+            "/api/documents",
+            files={"file": ("low.xlsx", buf.read(), "application/octet-stream")},
+        )
+    attempt = response.json()["parse_attempt"]
+    assert attempt["strategy"] == "deterministic"
+    assert attempt["confidence"] < 1.0
 
 
 @pytest.mark.asyncio
