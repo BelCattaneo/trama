@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import DocumentsList from "./pages/DocumentsList";
 import MyOrders from "./pages/MyOrders";
 import OperationsList from "./pages/OperationsList";
+import OrderDetail from "./pages/OrderDetail";
 import Review from "./pages/Review";
 import Signup from "./pages/Signup";
 import Upload from "./pages/Upload";
@@ -67,6 +68,14 @@ export default function App() {
         element={
           <RequireAuth>
             <Review />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/my-orders/:operation_id"
+        element={
+          <RequireAuth>
+            <OrderDetail />
           </RequireAuth>
         }
       />
