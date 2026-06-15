@@ -343,9 +343,73 @@ INDEX (document_id)
 UNIQUE INDEX (document_id) WHERE is_winner   -- at most one winner per document
 ```
 
+### `Operation`
+
+Confirmed commercial event. One row per parse_attempt promoted by the human reviewer to a persisted operation. Belongs to a Node (the producer or consumer that owns the source document).
+
+```sql
+operation
+  id                uuid             PK, server-generated
+  node_id           uuid             NOT NULL REFERENCES node(id) ON DELETE RESTRICT
+  parse_attempt_id  uuid             NOT NULL REFERENCES parse_attempt(id) ON DELETE RESTRICT
+  kind              varchar(20)      NOT NULL                 -- CHECK ('order', 'offer')
+  operation_date    date             NOT NULL
+  status            varchar(20)      NOT NULL                 -- CHECK ('confirmed')
+  confirmed_at      timestamptz      NOT NULL
+  created_at        timestamptz      NOT NULL DEFAULT now()
+
+UNIQUE (parse_attempt_id)
+INDEX (node_id, confirmed_at DESC)
+```
+
+### `OperationLine`
+
+Line item within an Operation. Cascades when the parent operation is deleted.
+
+```sql
+operation_line
+  id            uuid             PK, server-generated
+  operation_id  uuid             NOT NULL REFERENCES operation(id) ON DELETE CASCADE
+  product       varchar(200)     NOT NULL
+  quantity      numeric(12,3)    NOT NULL CHECK > 0
+  unit          varchar(40)      NULL
+  raw_text      text             NULL
+  line_no       smallint         NOT NULL
+  page          smallint         NULL
+
+INDEX (operation_id)
+```
+
+### `Correction`
+
+Captures every human edit applied during validation against the original `ParsePayload`. Used offline to measure parsing quality; never read by the runtime parser. Cascades when the parent parse_attempt is deleted.
+
+```sql
+correction
+  id                uuid             PK, server-generated
+  parse_attempt_id  uuid             NOT NULL REFERENCES parse_attempt(id) ON DELETE CASCADE
+  line_no           smallint         NULL                     -- index into original payload; NULL for 'line_added'
+  field             varchar(40)      NOT NULL                 -- CHECK ('product','quantity','unit','line_added','line_removed')
+  original_value    text             NULL
+  corrected_value   text             NULL
+  created_at        timestamptz      NOT NULL DEFAULT now()
+
+INDEX (parse_attempt_id)
+```
+
+### Notes (operations)
+
+- `Operation.node_id` and `Operation.parse_attempt_id` use `ON DELETE RESTRICT` because a confirmed operation is the system of record; deleting the source document or its parse attempts must not silently drop the persisted operation.
+- `Operation.parse_attempt_id` is `UNIQUE`: at most one operation per parse attempt. The "winner" parse attempt produces the operation; re-confirmation re-uses the same row instead of creating a duplicate.
+- `Operation.status` is constrained to `'confirmed'` for the MVP; `draft` / `cancelled` will be added when the lifecycle grows.
+- `Operation.kind` accepts `'order'` (consumer demand) and `'offer'` (producer supply). The MVP exercises `order` first.
+- `OperationLine.quantity` uses `numeric(12,3)` to keep three decimals (e.g. `0.250 kg`) without floating-point drift.
+- `Correction.field='line_added'` carries `line_no=NULL` because the corrected line did not exist in the original payload; `corrected_value` stores the new line as JSON.
+- `Correction.field='line_removed'` carries the original line in `original_value` (JSON) and `corrected_value=NULL`.
+
 ### Pending entities
 
-`Operation`, `OperationLine`, `Product`, `Correction`, `term_alias`. Defined in the next iteration.
+`Product`, `term_alias`. Defined in the next iteration.
 
 ---
 
