@@ -323,9 +323,29 @@ INDEX (content_hash)
 - `Document.mime_type` whitelisted via CHECK constraint: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `text/csv`, `image/jpeg`, `image/png`, `application/pdf`. Backend re-detects mime from bytes before insert; the constraint is defense-in-depth.
 - `Document.node_id` cascades on delete; if a Node disappears, its documents go too.
 
+### `ParseAttempt`
+
+Result of one attempt to parse a `Document`. Many rows per document — one per strategy tried (deterministic, llm). Failed attempts persist with `error_message` and `confidence=0` for debug and re-parse.
+
+```sql
+parse_attempt
+  id              uuid             PK, server-generated
+  document_id     uuid             NOT NULL REFERENCES document(id) ON DELETE CASCADE
+  strategy        varchar(20)      NOT NULL                 -- CHECK ('deterministic', 'llm')
+  confidence      real             NULL                     -- CHECK 0..1 or NULL
+  payload         jsonb            NULL                     -- ParsePayload validated; NULL when failed
+  prompt_version  varchar(40)      NULL                     -- only for strategy='llm'
+  error_message   text             NULL                     -- set when payload is NULL
+  is_winner       boolean          NOT NULL DEFAULT FALSE   -- set by E6 review confirmation
+  created_at      timestamptz      NOT NULL DEFAULT now()
+
+INDEX (document_id)
+UNIQUE INDEX (document_id) WHERE is_winner   -- at most one winner per document
+```
+
 ### Pending entities
 
-`ParseAttempt`, `Operation`, `OperationLine`, `Product`, `Correction`. Defined in the next iteration.
+`Operation`, `OperationLine`, `Product`, `Correction`, `term_alias`. Defined in the next iteration.
 
 ---
 
