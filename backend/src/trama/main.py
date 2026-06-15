@@ -9,6 +9,7 @@ from trama.auth_routes import router as auth_router
 from trama.config import settings
 from trama.db import close_pool, db_ok, open_pool
 from trama.document_routes import router as document_router
+from trama.llm.stub import stub_response_var
 from trama.log import configure_logging
 from trama.operation_routes import router as operation_router
 from trama.storage import LocalStorage
@@ -37,6 +38,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+if settings.llm_provider == "stub":
+    # test-only — populates a contextvar so StubLLMClient can pick a per-request
+    # canned response. Refuses to run on any other provider.
+    @app.middleware("http")
+    async def _stub_llm_header_middleware(request: Request, call_next):
+        header = request.headers.get("X-LLM-Stub-Response")
+        token = stub_response_var.set(header) if header is not None else None
+        try:
+            return await call_next(request)
+        finally:
+            if token is not None:
+                stub_response_var.reset(token)
+
 
 app.include_router(auth_router)
 app.include_router(user_router)
