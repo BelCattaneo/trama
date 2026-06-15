@@ -5,6 +5,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import DocumentsList from "./pages/DocumentsList";
 import OperationsList from "./pages/OperationsList";
+import Review from "./pages/Review";
 import Signup from "./pages/Signup";
 import Upload from "./pages/Upload";
 
@@ -49,6 +50,14 @@ export default function App() {
         element={
           <RequireAuth>
             <OperationsList />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/review/:document_id"
+        element={
+          <RequireAuth>
+            <Review />
           </RequireAuth>
         }
       />

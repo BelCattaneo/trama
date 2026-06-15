@@ -25,6 +25,7 @@
   --color-success: #dfe6e1;
   --color-success-foreground: #004d1a;
   --color-warning: #e9e3d8;
+  --color-warning-soft: #fff8e7;
   --color-warning-foreground: #804200;
   --color-info: #dfdfe6;
   --color-info-foreground: #000066;
@@ -107,6 +108,7 @@
   --color-success: #222924;
   --color-success-foreground: #b6ffce;
   --color-warning: #291c0f;
+  --color-warning-soft: #3a2a14;
   --color-warning-foreground: #ff8400;
   --color-info: #222229;
   --color-info-foreground: #b2b2ff;
