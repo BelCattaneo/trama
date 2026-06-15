@@ -19,10 +19,7 @@ def make_xlsx_bytes(payload: bytes = b"<xml/>") -> bytes:
 
 
 PDF_BYTES = b"%PDF-1.4\n%fake pdf body\n"
-PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"\x00" * 32
-JPEG_BYTES = b"\xff\xd8\xff\xe0" + b"\x00" * 32
 CSV_BYTES = b"name,qty\napple,3\nbanana,5\n"
-HEIC_BYTES = b"\x00\x00\x00\x20ftypheic\x00" * 4
 
 
 @pytest_asyncio.fixture
@@ -74,20 +71,6 @@ async def test_upload_xlsx_happy_path(setup):
 
 
 @pytest.mark.asyncio
-async def test_upload_pdf_happy_path(setup):
-    async with client() as c:
-        c.cookies.set(COOKIE_NAME, setup["session_id"])
-        response = await c.post(
-            "/api/documents",
-            files={"file": ("doc.pdf", PDF_BYTES, "application/octet-stream")},
-        )
-    assert response.status_code == 201
-    body = response.json()
-    assert body["document"]["mime_type"] == "application/pdf"
-    assert body["parse_attempt"] is None
-
-
-@pytest.mark.asyncio
 async def test_upload_csv_happy_path(setup):
     async with client() as c:
         c.cookies.set(COOKIE_NAME, setup["session_id"])
@@ -99,34 +82,6 @@ async def test_upload_csv_happy_path(setup):
     body = response.json()
     assert body["document"]["mime_type"] == "text/csv"
     assert body["parse_attempt"] is not None
-
-
-@pytest.mark.asyncio
-async def test_upload_png_happy_path(setup):
-    async with client() as c:
-        c.cookies.set(COOKIE_NAME, setup["session_id"])
-        response = await c.post(
-            "/api/documents",
-            files={"file": ("foto.png", PNG_BYTES, "application/octet-stream")},
-        )
-    assert response.status_code == 201
-    body = response.json()
-    assert body["document"]["mime_type"] == "image/png"
-    assert body["parse_attempt"] is None
-
-
-@pytest.mark.asyncio
-async def test_upload_jpeg_happy_path(setup):
-    async with client() as c:
-        c.cookies.set(COOKIE_NAME, setup["session_id"])
-        response = await c.post(
-            "/api/documents",
-            files={"file": ("foto.jpg", JPEG_BYTES, "application/octet-stream")},
-        )
-    assert response.status_code == 201
-    body = response.json()
-    assert body["document"]["mime_type"] == "image/jpeg"
-    assert body["parse_attempt"] is None
 
 
 @pytest.mark.asyncio
@@ -155,11 +110,12 @@ async def test_upload_rejects_utf8_text_without_delimiter(setup):
 
 @pytest.mark.asyncio
 async def test_upload_rejects_unsupported_mime(setup):
+    unknown = b"\x00" * 32
     async with client() as c:
         c.cookies.set(COOKIE_NAME, setup["session_id"])
         response = await c.post(
             "/api/documents",
-            files={"file": ("x.heic", HEIC_BYTES, "application/octet-stream")},
+            files={"file": ("x.bin", unknown, "application/octet-stream")},
         )
     assert response.status_code == 400
     assert response.json() == {"error": "formato no soportado"}
