@@ -8,6 +8,7 @@ class ParseLine(BaseModel):
     quantity: float
     unit: str | None = None
     raw_text: str | None = None
+    page: int | None = None
 
 
 class ParsePayload(BaseModel):

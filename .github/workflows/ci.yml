@@ -37,6 +37,8 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v6
+        with:
+          prune-cache: false
 
       - name: Install backend dependencies
         run: uv sync
@@ -104,6 +106,8 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v6
+        with:
+          prune-cache: false
 
       - name: Install backend dependencies
         working-directory: backend

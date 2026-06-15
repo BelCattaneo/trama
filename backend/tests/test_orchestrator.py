@@ -106,24 +106,10 @@ def test_run_deterministic_csv_standard_confidence_10():
 
 
 @pytest.mark.asyncio
-async def test_run_parse_returns_none_for_pdf(pool_lifecycle):
+async def test_run_parse_returns_none_for_unknown_mime(pool_lifecycle):
     from trama.parsing.orchestrator import run_parse
 
-    assert await run_parse(None, "application/pdf", b"%PDF-1.4\n") is None
-
-
-@pytest.mark.asyncio
-async def test_run_parse_returns_none_for_jpeg(pool_lifecycle):
-    from trama.parsing.orchestrator import run_parse
-
-    assert await run_parse(None, "image/jpeg", b"\xff\xd8\xff") is None
-
-
-@pytest.mark.asyncio
-async def test_run_parse_returns_none_for_png(pool_lifecycle):
-    from trama.parsing.orchestrator import run_parse
-
-    assert await run_parse(None, "image/png", b"\x89PNG\r\n\x1a\n") is None
+    assert await run_parse(None, "application/octet-stream", b"\x00") is None
 
 
 # ---------- integration via /api/documents ----------
@@ -195,18 +181,6 @@ async def test_upload_csv_returns_parse_attempt(setup):
     body = response.json()
     assert body["parse_attempt"] is not None
     assert body["parse_attempt"]["confidence"] == 1.0
-
-
-@pytest.mark.asyncio
-async def test_upload_pdf_returns_null_parse_attempt(setup):
-    pdf_bytes = b"%PDF-1.4\n%fake\n"
-    async with client() as c:
-        c.cookies.set(COOKIE_NAME, setup["session_id"])
-        response = await c.post(
-            "/api/documents",
-            files={"file": ("x.pdf", pdf_bytes, "application/octet-stream")},
-        )
-    assert response.json()["parse_attempt"] is None
 
 
 @pytest.mark.asyncio
@@ -315,10 +289,8 @@ async def test_upload_response_does_not_expose_prompt_version(setup):
 
 
 @pytest.mark.asyncio
-async def test_low_confidence_stays_deterministic_no_fallback(setup):
-    """Even with 0 lines parsed and confidence 0.3, strategy stays 'deterministic'.
-    LLM fallback ships in E5; until then the orchestrator does not escalate.
-    """
+async def test_low_confidence_xlsx_stays_deterministic(setup):
+    """xlsx mime always goes deterministic regardless of confidence — no LLM escalation."""
     # All-rows-skipped xlsx: headers OK, but every row missing product
     from openpyxl import Workbook
 
@@ -344,21 +316,3 @@ async def test_low_confidence_stays_deterministic_no_fallback(setup):
     assert attempt["confidence"] < 1.0
 
 
-@pytest.mark.asyncio
-async def test_reparse_pdf_returns_400(setup):
-    async with client() as c:
-        c.cookies.set(COOKIE_NAME, setup["session_id"])
-        upload = await c.post(
-            "/api/documents",
-            files={
-                "file": (
-                    "doc.pdf",
-                    b"%PDF-1.4\n%fake\n",
-                    "application/octet-stream",
-                )
-            },
-        )
-        doc_id = upload.json()["document"]["id"]
-        response = await c.post(f"/api/documents/{doc_id}/reparse")
-    assert response.status_code == 400
-    assert response.json() == {"error": "este formato todavía no tiene parser"}

@@ -62,6 +62,9 @@ class ReviewResponse(BaseModel):
     parse_attempt: ReviewParseAttemptOut | None
 
 
+_HEIC_BRANDS = (b"heic", b"heix", b"hevc", b"mif1")
+
+
 def detect_mime(data: bytes) -> str | None:
     if data.startswith(b"%PDF-"):
         return "application/pdf"
@@ -69,6 +72,8 @@ def detect_mime(data: bytes) -> str | None:
         return "image/jpeg"
     if data.startswith(b"\x89PNG\r\n\x1a\n"):
         return "image/png"
+    if len(data) >= 12 and data[4:8] == b"ftyp" and data[8:12] in _HEIC_BRANDS:
+        return "image/heic"
     if data.startswith(b"PK\x03\x04") and b"xl/" in data:
         return (
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
