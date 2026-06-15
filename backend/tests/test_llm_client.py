@@ -158,6 +158,25 @@ async def test_timeout_raises_without_retry(monkeypatch, caplog):
 
 
 @pytest.mark.asyncio
+async def test_total_timeout_budget_fires(monkeypatch, caplog):
+    import asyncio as _asyncio
+
+    monkeypatch.setattr("trama.llm.gemini._TIMEOUT_S", 0.05)
+
+    async def slow_generate(**_kwargs):
+        await _asyncio.sleep(10.0)
+
+    generate = AsyncMock(side_effect=slow_generate)
+    client = _make_client(monkeypatch, generate)
+
+    with pytest.raises(TimeoutError):
+        await client.parse_image(b"bytes", "prompt")
+
+    failed = [r for r in caplog.records if "llm_call_failed" in r.getMessage()]
+    assert len(failed) == 1
+
+
+@pytest.mark.asyncio
 async def test_logs_never_contain_secrets_prompt_or_response(monkeypatch, caplog):
     secret_prompt = "PROMPT_NEVER_LOG_ME"
     secret_image = b"IMAGE_BYTES_NEVER_LOG_ME"

@@ -29,15 +29,25 @@ class GeminiClient:
     async def parse_image(self, image_bytes: bytes, prompt: str) -> dict:
         part = types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg")
         started = time.monotonic()
+        state: dict[str, int] = {"attempts": 0}
+        try:
+            return await asyncio.wait_for(
+                self._call_with_retry(part, prompt, started, state),
+                timeout=_TIMEOUT_S,
+            )
+        except TimeoutError as exc:
+            self._log_failed(exc, state["attempts"] or 1, started)
+            raise
 
+    async def _call_with_retry(
+        self, part, prompt: str, started: float, state: dict[str, int]
+    ) -> dict:
         for attempt in range(1, _MAX_ATTEMPTS + 1):
+            state["attempts"] = attempt
             try:
-                response = await asyncio.wait_for(
-                    self._client.aio.models.generate_content(
-                        model=self._model,
-                        contents=[part, prompt],
-                    ),
-                    timeout=_TIMEOUT_S,
+                response = await self._client.aio.models.generate_content(
+                    model=self._model,
+                    contents=[part, prompt],
                 )
             except _RETRYABLE as exc:
                 if attempt < _MAX_ATTEMPTS:
@@ -54,7 +64,7 @@ class GeminiClient:
                     continue
                 self._log_failed(exc, attempt, started)
                 raise
-            except (errors.ClientError, TimeoutError) as exc:
+            except errors.ClientError as exc:
                 self._log_failed(exc, attempt, started)
                 raise
 
