@@ -1,0 +1,9 @@
+{
+  "text": "{\"lines\": [{\"product\": \"unreadable\", \"quantity\": 0, \"unit\": null, \"raw_text\": \"fila borrosa\"}, {\"product\": \"cebolla\", \"quantity\": 2.0, \"unit\": \"atado\", \"raw_text\": \"cebolla 2 atados\"}], \"warnings\": []}",
+  "usage": {
+    "prompt_tokens": 130,
+    "completion_tokens": 50,
+    "total_tokens": 180
+  },
+  "response_id": "resp-unreadable"
+}

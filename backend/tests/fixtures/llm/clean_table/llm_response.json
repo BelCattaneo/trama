@@ -1,0 +1,9 @@
+{
+  "text": "{\"lines\": [{\"product\": \"tomate perita\", \"quantity\": 5.0, \"unit\": \"kg\", \"raw_text\": \"tomate perita 5kg\"}, {\"product\": \"lechuga\", \"quantity\": 3.0, \"unit\": \"unidad\", \"raw_text\": \"lechuga 3 unidades\"}], \"warnings\": []}",
+  "usage": {
+    "prompt_tokens": 120,
+    "completion_tokens": 45,
+    "total_tokens": 165
+  },
+  "response_id": "resp-clean-table"
+}

@@ -1,0 +1,19 @@
+{
+  "lines": [
+    {
+      "product": "unreadable",
+      "quantity": 0.0,
+      "unit": null,
+      "raw_text": "fila borrosa",
+      "page": 1
+    },
+    {
+      "product": "cebolla",
+      "quantity": 2.0,
+      "unit": "atado",
+      "raw_text": "cebolla 2 atados",
+      "page": 1
+    }
+  ],
+  "warnings": []
+}
