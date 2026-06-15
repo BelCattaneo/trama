@@ -12,6 +12,26 @@ from trama.sessions import create_session
 from trama.storage import LocalStorage
 
 
+class _StubLLMClient:
+    async def parse_image(self, image_bytes: bytes, prompt: str) -> dict:
+        return {
+            "text": '{"lines": [], "warnings": []}',
+            "usage": {
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "total_tokens": 0,
+            },
+            "response_id": None,
+        }
+
+
+@pytest.fixture(autouse=True)
+def _llm_stub(monkeypatch):
+    monkeypatch.setattr(
+        "trama.parsing.orchestrator.get_llm_client", lambda: _StubLLMClient()
+    )
+
+
 @pytest.fixture(autouse=True, scope="session")
 def _isolated_storage(tmp_path_factory):
     original = getattr(app.state, "storage", None)
