@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     # Dev default False so the cookie works over plain HTTP localhost.
     cookie_secure: bool = False
     storage_path: Path = Path("./storage")
+    llm_provider: str = "gemini"
+    llm_model: str = "gemini-2.5-flash"
+    google_api_key: str | None = None
 
 
 settings = Settings()
