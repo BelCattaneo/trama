@@ -1,5 +1,11 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import {
+  MemoryRouter,
+  Route,
+  Routes,
+  useLocation,
+  useParams,
+} from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider } from "../contexts/AuthContext";
 import Upload from "./Upload";
@@ -7,6 +13,11 @@ import Upload from "./Upload";
 function LoginStub() {
   const location = useLocation();
   return <div>login page · {location.state?.message ?? ""}</div>;
+}
+
+function ReviewStub() {
+  const { document_id } = useParams();
+  return <div>review page · {document_id}</div>;
 }
 
 function renderUpload() {
@@ -24,7 +35,7 @@ function renderUpload() {
       >
         <Routes>
           <Route path="/upload" element={<Upload />} />
-          <Route path="/documents" element={<div>documents page</div>} />
+          <Route path="/review/:document_id" element={<ReviewStub />} />
           <Route path="/login" element={<LoginStub />} />
         </Routes>
       </AuthProvider>
@@ -89,7 +100,7 @@ describe("Upload", () => {
     expect(drop.className).not.toMatch(/upload-page__drop--active/);
   });
 
-  it("navigates to /documents on 201 with successful parse", async () => {
+  it("navigates to /review/:document_id on 201", async () => {
     global.fetch.mockResolvedValue({
       status: 201,
       ok: true,
@@ -103,7 +114,7 @@ describe("Upload", () => {
     const file = makeFile("pedido.pdf", 1024, "application/pdf");
     fireEvent.change(input, { target: { files: [file] } });
     await waitFor(() => {
-      expect(screen.getByText(/documents page/i)).toBeInTheDocument();
+      expect(screen.getByText(/review page · doc-1/i)).toBeInTheDocument();
     });
     expect(global.fetch).toHaveBeenCalledWith(
       "/api/documents",
@@ -111,12 +122,12 @@ describe("Upload", () => {
     );
   });
 
-  it("shows parse error_message and stays on page when confidence is 0", async () => {
+  it("navigates to /review/:document_id on 201 even when confidence is 0", async () => {
     global.fetch.mockResolvedValue({
       status: 201,
       ok: true,
       json: async () => ({
-        document: { id: "doc-1" },
+        document: { id: "doc-zero", mime_type: "application/pdf" },
         parse_attempt: {
           id: "att-1",
           strategy: "deterministic",
@@ -131,14 +142,11 @@ describe("Upload", () => {
     const file = makeFile("pedido.pdf", 1024, "application/pdf");
     fireEvent.change(input, { target: { files: [file] } });
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        /no se encontraron columnas reconocidas/i,
-      );
+      expect(screen.getByText(/review page · doc-zero/i)).toBeInTheDocument();
     });
-    expect(screen.queryByText(/documents page/i)).not.toBeInTheDocument();
   });
 
-  it("shows backend 400 error message", async () => {
+  it("shows backend 400 error message and does not navigate", async () => {
     global.fetch.mockResolvedValue({
       status: 400,
       ok: false,
@@ -153,10 +161,31 @@ describe("Upload", () => {
         /el archivo está vacío/i,
       );
     });
+    expect(screen.queryByText(/review page/i)).not.toBeInTheDocument();
   });
 
-  it("shows generic error on network failure", async () => {
-    global.fetch.mockRejectedValue(new Error("network down"));
+  it("shows backend 5xx error message and does not navigate", async () => {
+    global.fetch.mockResolvedValue({
+      status: 500,
+      ok: false,
+      json: async () => ({ error: "Falló el servidor" }),
+    });
+    renderUpload();
+    const input = screen.getByLabelText(/seleccionar archivo/i);
+    const file = makeFile("pedido.pdf", 1024, "application/pdf");
+    fireEvent.change(input, { target: { files: [file] } });
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(/falló el servidor/i);
+    });
+    expect(screen.queryByText(/review page/i)).not.toBeInTheDocument();
+  });
+
+  it("falls back to generic Spanish message on 5xx without error field", async () => {
+    global.fetch.mockResolvedValue({
+      status: 500,
+      ok: false,
+      json: async () => ({}),
+    });
     renderUpload();
     const input = screen.getByLabelText(/seleccionar archivo/i);
     const file = makeFile("pedido.pdf", 1024, "application/pdf");
@@ -166,6 +195,18 @@ describe("Upload", () => {
         /no pudimos subir el archivo/i,
       );
     });
+  });
+
+  it("shows connection error on network failure and does not navigate", async () => {
+    global.fetch.mockRejectedValue(new Error("network down"));
+    renderUpload();
+    const input = screen.getByLabelText(/seleccionar archivo/i);
+    const file = makeFile("pedido.pdf", 1024, "application/pdf");
+    fireEvent.change(input, { target: { files: [file] } });
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(/error de conexión/i);
+    });
+    expect(screen.queryByText(/review page/i)).not.toBeInTheDocument();
   });
 
   it("redirects to /login with explanatory message on 401", async () => {
