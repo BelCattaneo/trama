@@ -4,6 +4,7 @@ import RequireAuth from "./components/RequireAuth";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import DocumentsList from "./pages/DocumentsList";
+import MyOrders from "./pages/MyOrders";
 import OperationsList from "./pages/OperationsList";
 import Review from "./pages/Review";
 import Signup from "./pages/Signup";
@@ -50,6 +51,14 @@ export default function App() {
         element={
           <RequireAuth>
             <OperationsList />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/my-orders"
+        element={
+          <RequireAuth>
+            <MyOrders />
           </RequireAuth>
         }
       />
