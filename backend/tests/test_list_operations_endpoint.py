@@ -167,3 +167,27 @@ async def test_unauthenticated_returns_401(pool_lifecycle):
         response = await c.get("/api/operations")
     assert response.status_code == 401
     assert response.json() == {"error": "no autenticado"}
+
+
+@pytest.mark.asyncio
+async def test_limit_zero_returns_422(setup):
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.get("/api/operations?limit=0")
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_limit_negative_returns_422(setup):
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.get("/api/operations?limit=-1")
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_offset_negative_returns_422(setup):
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.get("/api/operations?offset=-1")
+    assert response.status_code == 422

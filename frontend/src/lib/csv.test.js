@@ -49,6 +49,40 @@ describe("buildOperationCsv", () => {
     ]);
     expect(csv).toContain("tomate,1,");
   });
+
+  it("neutralizes Excel formula injection in product (leading '=')", () => {
+    const csv = buildOperationCsv([
+      {
+        product: '=HYPERLINK("http://evil/","click")',
+        quantity: 1,
+        unit: "kg",
+      },
+    ]);
+    // Leading single quote prevents formula evaluation; quotes wrap because the
+    // resulting field still contains commas/quotes from the escape.
+    expect(csv).toContain('"\'=HYPERLINK(""http://evil/"",""click"")",1,kg');
+  });
+
+  it("neutralizes leading '+' '-' '@' and tab/CR", () => {
+    const csv = buildOperationCsv([
+      { product: "+SUM(A1)", quantity: 1, unit: "" },
+      { product: "-2+3", quantity: 1, unit: "" },
+      { product: "@formula", quantity: 1, unit: "" },
+      { product: "\tspaced", quantity: 1, unit: "" },
+    ]);
+    expect(csv).toContain("'+SUM(A1)");
+    expect(csv).toContain("'-2+3");
+    expect(csv).toContain("'@formula");
+    expect(csv).toContain("'\tspaced");
+  });
+
+  it("leaves benign leading chars alone", () => {
+    const csv = buildOperationCsv([
+      { product: "tomate", quantity: 1, unit: "kg" },
+    ]);
+    expect(csv).toContain("tomate,1,kg");
+    expect(csv).not.toContain("'tomate");
+  });
 });
 
 describe("buildOperationFilename", () => {

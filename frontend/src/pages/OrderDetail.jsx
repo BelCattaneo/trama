@@ -172,8 +172,8 @@ export default function OrderDetail() {
             </tr>
           </thead>
           <tbody>
-            {lines.map((line, idx) => (
-              <tr key={line.line_no ?? idx}>
+            {lines.map((line) => (
+              <tr key={line.line_no}>
                 <td data-label="Producto">{line.product}</td>
                 <td data-label="Cantidad">{line.quantity}</td>
                 <td data-label="Unidad">{line.unit}</td>
@@ -184,12 +184,6 @@ export default function OrderDetail() {
             ))}
           </tbody>
         </table>
-
-        {toast && (
-          <div className="order-detail__toast" role="alert">
-            {toast}
-          </div>
-        )}
       </main>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Loader, PackageOpen } from "lucide-react";
 import NavBarAuth from "../components/NavBarAuth";
 import { apiGet } from "../lib/api";
@@ -13,20 +13,24 @@ const dateFormatter = new Intl.DateTimeFormat("es-AR", {
 
 function formatDate(value) {
   if (!value) return "";
-  const date = new Date(value);
+  // operation_date is a DATE (YYYY-MM-DD). Parse as local to avoid timezone shifts.
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return "";
+  const date = new Date(year, month - 1, day);
   if (Number.isNaN(date.getTime())) return "";
   return dateFormatter.format(date);
 }
 
 function kindLabel(kind) {
   if (kind === "order") return "pedido";
-  if (kind === "supply") return "oferta";
+  if (kind === "offer") return "oferta";
   return kind ?? "";
 }
 
 const HIGHLIGHT_MS = 3000;
 
 export default function MyOrders() {
+  const navigate = useNavigate();
   const [state, setState] = useState({ status: "loading", operations: [] });
   const [searchParams] = useSearchParams();
   const highlightId = searchParams.get("highlight");
@@ -40,6 +44,10 @@ export default function MyOrders() {
           signal: controller.signal,
         });
         if (controller.signal.aborted) return;
+        if (response.status === 401) {
+          navigate("/login", { replace: true });
+          return;
+        }
         if (!response.ok) {
           const body = await response.json().catch(() => ({}));
           setState({
@@ -50,7 +58,7 @@ export default function MyOrders() {
           return;
         }
         const body = await response.json();
-        const operations = body.operations ?? [];
+        const operations = body.items ?? [];
         setState({
           status: operations.length === 0 ? "empty" : "list",
           operations,
@@ -65,7 +73,7 @@ export default function MyOrders() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (!activeHighlight) return undefined;
@@ -132,7 +140,7 @@ function OperationsTable({ operations, highlightId }) {
           <tr>
             <th>Fecha</th>
             <th>Cantidad de líneas</th>
-            <th>Estado</th>
+            <th>Tipo</th>
             <th>Acción</th>
           </tr>
         </thead>
@@ -179,7 +187,7 @@ function OperationsTable({ operations, highlightId }) {
                 <span>{op.line_count}</span>
               </div>
               <div className="my-orders-page__card-row">
-                <span className="my-orders-page__card-label">Estado</span>
+                <span className="my-orders-page__card-label">Tipo</span>
                 <span>{kindLabel(op.kind)}</span>
               </div>
               <Link
