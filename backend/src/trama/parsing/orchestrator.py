@@ -2,7 +2,7 @@ import io
 from collections.abc import Callable
 from uuid import UUID
 
-import pypdfium2 as pdfium
+import structlog
 from pydantic import BaseModel, ConfigDict
 
 from trama import db
@@ -14,6 +14,8 @@ from trama.parsing.llm_response import parse_llm_response
 from trama.parsing.schema import ParseLine, ParsePayload
 from trama.parsing.xlsx_parser import parse_xlsx
 from trama.prompts import load_prompt
+
+logger = structlog.get_logger(__name__)
 
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 CSV_MIME = "text/csv"
@@ -78,13 +80,9 @@ def _run_deterministic(mime_type: str, contents: bytes) -> ParseResult:
 
 
 def _prepare_pages(mime_type: str, contents: bytes) -> tuple[list[bytes], bool]:
-    """Return (resized JPEG pages, pdf_truncated_flag)."""
     if mime_type != PDF_MIME:
         return [resize_for_llm(contents)], False
-    pdf = pdfium.PdfDocument(contents)
-    total_pages = len(pdf)
-    truncated = total_pages > MAX_PDF_PAGES
-    raw_pages = pdf_to_images(contents)
+    raw_pages, truncated = pdf_to_images(contents)
     return [resize_for_llm(p) for p in raw_pages], truncated
 
 
@@ -96,6 +94,11 @@ async def _run_llm(mime_type: str, contents: bytes, llm_client) -> ParseResult:
     try:
         pages, pdf_truncated = _prepare_pages(mime_type, contents)
     except Exception as exc:  # noqa: BLE001
+        logger.exception(
+            "llm_preprocess_failed",
+            mime_type=mime_type,
+            error_type=type(exc).__name__,
+        )
         return ParseResult(
             strategy="llm",
             confidence=0.0,
@@ -116,6 +119,9 @@ async def _run_llm(mime_type: str, contents: bytes, llm_client) -> ParseResult:
             payload = parse_llm_response(result["text"])
         except Exception as exc:  # noqa: BLE001
             error_type = type(exc).__name__
+            logger.exception(
+                "llm_page_failed", page=page_num, error_type=error_type
+            )
             page_errors.append(f"[p{page_num}] página falló: {error_type}")
             all_warnings.append(f"[p{page_num}] página falló: {error_type}")
             continue
