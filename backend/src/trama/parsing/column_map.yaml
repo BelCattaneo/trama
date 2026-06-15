@@ -1,0 +1,24 @@
+product:
+  - producto
+  - productos
+  - item
+  - articulo
+  - art
+  - mercaderia
+  - descripcion
+  - verdura
+  - fruta
+  - producto/servicio
+quantity:
+  - cantidad
+  - cant
+  - qty
+  - unidades
+  - kilos
+  - kg
+unit:
+  - unidad
+  - unit
+  - medida
+  - u/medida
+  - presentacion
