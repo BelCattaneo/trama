@@ -2,6 +2,7 @@ import io
 from pathlib import Path
 
 import pytest
+from openpyxl import Workbook
 
 from trama.parsing.xlsx_parser import ParseError, parse_xlsx
 
@@ -94,7 +95,6 @@ def test_corrupt_zip_raises_parse_error():
 
 def test_quantity_parsing_handles_int_float_string():
     # Build a tiny xlsx on the fly
-    from openpyxl import Workbook
 
     wb = Workbook()
     ws = wb.active
@@ -113,7 +113,6 @@ def test_quantity_parsing_handles_int_float_string():
 
 
 def test_unit_optional_when_missing_column():
-    from openpyxl import Workbook
 
     wb = Workbook()
     ws = wb.active
@@ -129,7 +128,6 @@ def test_unit_optional_when_missing_column():
 
 
 def test_unit_optional_when_cell_empty():
-    from openpyxl import Workbook
 
     wb = Workbook()
     ws = wb.active

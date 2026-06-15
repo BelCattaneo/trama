@@ -49,7 +49,6 @@ _DUMMY_HASH = hash_password("dummy-placeholder-for-timing")
 router = APIRouter(prefix="/api/auth")
 
 
-# TODO(post-MVP): rate-limit /login to slow brute-force attempts.
 @router.post("/login")
 async def login(payload: LoginRequest, response: Response):
     async with db.pool.connection() as conn:

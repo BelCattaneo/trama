@@ -7,10 +7,7 @@ from trama.parsing.schema import ParsePayload
 
 
 def parse_xlsx(stream: BinaryIO) -> ParsePayload:
-    """Parse an .xlsx file stream into a ParsePayload.
-    Raises ParseError if no recognizable header row is found or the file is
-    not a valid xlsx.
-    """
+    """Parse an .xlsx file stream into a ParsePayload."""
     try:
         workbook = load_workbook(stream, read_only=True, data_only=True)
     except Exception as exc:
