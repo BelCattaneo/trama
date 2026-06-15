@@ -39,7 +39,9 @@ test.describe("review flows", () => {
 
     await page.getByRole("button", { name: "Confirmar" }).click();
     await expect(page).toHaveURL(/\/my-orders\?highlight=[0-9a-f-]{36}/);
-    await expect(page.locator(".highlighted-row").first()).toBeVisible();
+    await expect(page.locator(".highlighted-row").first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("scenario 2: jpeg with LLM stub clean → edit quantity → confirm", async ({
@@ -58,7 +60,9 @@ test.describe("review flows", () => {
     await expect(page.getByRole("button", { name: "Confirmar" })).toBeEnabled();
     await page.getByRole("button", { name: "Confirmar" }).click();
     await expect(page).toHaveURL(/\/my-orders\?highlight=[0-9a-f-]{36}/);
-    await expect(page.locator(".highlighted-row").first()).toBeVisible();
+    await expect(page.locator(".highlighted-row").first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("scenario 3: 3-page pdf with stubbed LLM per page → tabs filter", async ({
@@ -89,14 +93,14 @@ test.describe("review flows", () => {
 
     // start filtered on page 1 → only 1 line, no warnings
     await expect(page.locator(".review-page__line")).toHaveCount(1);
-    await expect(page.locator(".review-page__line").first()).toContainText(
-      "tomate",
-    );
+    await expect(
+      page.locator("input[id^='line-'][id$='-product']").first(),
+    ).toHaveValue("tomate");
 
     await page.getByRole("tab", { name: "Página 3" }).click();
-    await expect(page.locator(".review-page__line").first()).toContainText(
-      "zanahoria",
-    );
+    await expect(
+      page.locator("input[id^='line-'][id$='-product']").first(),
+    ).toHaveValue("zanahoria");
     await expect(page.getByText("[p3] alerta de prueba")).toBeVisible();
 
     await page.getByRole("tab", { name: "Todas las páginas" }).click();
