@@ -58,7 +58,7 @@ function mockOperationsResponse(operations) {
   global.fetch.mockResolvedValue({
     ok: true,
     status: 200,
-    json: async () => ({ operations }),
+    json: async () => ({ items: operations, total: operations.length }),
   });
 }
 
@@ -85,7 +85,7 @@ describe("MyOrders", () => {
       resolve({
         ok: true,
         status: 200,
-        json: async () => ({ operations: [] }),
+        json: async () => ({ items: [], total: 0 }),
       });
     });
     await waitFor(() => {

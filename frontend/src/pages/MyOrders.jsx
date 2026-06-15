@@ -50,7 +50,7 @@ export default function MyOrders() {
           return;
         }
         const body = await response.json();
-        const operations = body.operations ?? [];
+        const operations = body.items ?? [];
         setState({
           status: operations.length === 0 ? "empty" : "list",
           operations,
