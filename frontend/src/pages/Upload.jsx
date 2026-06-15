@@ -36,21 +36,15 @@ export default function Upload() {
       const response = await apiPostForm("/api/documents", formData);
       if (response.status === 201) {
         const body = await response.json().catch(() => null);
-        const attempt = body?.parse_attempt;
-        if (attempt && attempt.confidence === 0) {
-          setError(
-            attempt.error_message ||
-              "Subimos el archivo pero no pudimos interpretarlo.",
-          );
+        const documentId = body?.document?.id;
+        if (!documentId) {
+          setError("No pudimos subir el archivo, intentá de nuevo.");
           return;
         }
-        navigate("/documents");
+        navigate(`/review/${documentId}`);
         return;
       }
-      if (response.status === 400) {
-        const body = await response.json().catch(() => ({}));
-        setError(body.error || "El archivo no pudo ser procesado.");
-      } else if (response.status === 401) {
+      if (response.status === 401) {
         navigate("/login", {
           state: {
             message: "Tu sesión expiró. Iniciá sesión de nuevo.",
@@ -58,11 +52,11 @@ export default function Upload() {
           replace: true,
         });
         return;
-      } else {
-        setError("No pudimos subir el archivo, intentá de nuevo.");
       }
+      const body = await response.json().catch(() => ({}));
+      setError(body.error || "No pudimos subir el archivo, intentá de nuevo.");
     } catch {
-      setError("No pudimos subir el archivo, intentá de nuevo.");
+      setError("Error de conexión, intentá de nuevo.");
     } finally {
       setUploading(false);
     }
