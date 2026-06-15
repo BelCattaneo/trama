@@ -1,10 +1,11 @@
 import hashlib
 from datetime import datetime
 from typing import Annotated
+from urllib.parse import quote
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
 from trama import db
@@ -184,6 +185,52 @@ async def list_documents(
             )
             for r in rows
         ]
+    )
+
+
+def _content_disposition(filename: str) -> str:
+    try:
+        filename.encode("ascii")
+        safe = filename.replace("\\", "\\\\").replace('"', '\\"')
+        return f'inline; filename="{safe}"'
+    except UnicodeEncodeError:
+        return f"inline; filename*=UTF-8''{quote(filename, safe='')}"
+
+
+@router.get("/documents/{document_id}/file")
+async def get_document_file(
+    request: Request,
+    document_id: UUID,
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> Response:
+    async with db.pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """SELECT original_filename, mime_type, storage_ref
+                   FROM document
+                   WHERE id = %s AND node_id = %s""",
+                (document_id, user.node_id),
+            )
+            row = await cur.fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="documento no encontrado")
+    original_filename, mime_type, storage_ref = row
+
+    storage: Storage = request.app.state.storage
+    try:
+        contents = storage.get(storage_ref)
+    except FileNotFoundError as err:
+        raise HTTPException(
+            status_code=500, detail="no se pudo leer el archivo"
+        ) from err
+
+    return Response(
+        content=contents,
+        media_type=mime_type,
+        headers={
+            "Content-Disposition": _content_disposition(original_filename),
+            "Cache-Control": "private, max-age=300",
+        },
     )
 
 
