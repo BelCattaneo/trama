@@ -1,16 +1,18 @@
 import hashlib
-from datetime import datetime
+from datetime import date, datetime
 from typing import Annotated
 from urllib.parse import quote
 from uuid import UUID
 
+import psycopg
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
 from trama import db
+from trama.parsing.diff import diff_payloads
 from trama.parsing.orchestrator import run_parse
-from trama.parsing.schema import ParsePayload
+from trama.parsing.schema import ConfirmCorrection, ConfirmLine, ParsePayload
 from trama.sessions import AuthUser, require_user
 from trama.storage import Storage
 
@@ -61,6 +63,12 @@ class ReparseResponse(BaseModel):
 class ReviewResponse(BaseModel):
     document: DocumentOut
     parse_attempt: ReviewParseAttemptOut | None
+
+
+class ConfirmBody(BaseModel):
+    lines: list[ConfirmLine]
+    corrections: list[ConfirmCorrection] = []
+    operation_date: date | None = None
 
 
 _HEIC_BRANDS = (b"heic", b"heix", b"hevc", b"mif1")
@@ -323,3 +331,123 @@ async def review_document(
             created_at=attempt_row[7],
         )
     return ReviewResponse(document=document, parse_attempt=parse_attempt)
+
+
+def _validate_confirm_lines(lines: list[ConfirmLine]) -> None:
+    if not lines:
+        raise HTTPException(
+            status_code=400, detail="se necesita al menos una línea"
+        )
+    for idx, line in enumerate(lines, start=1):
+        if line.product == "" or line.product == "unreadable":
+            raise HTTPException(
+                status_code=400,
+                detail=f"línea {idx} con producto sin completar",
+            )
+        if line.quantity <= 0:
+            raise HTTPException(
+                status_code=400, detail=f"línea {idx} con cantidad inválida"
+            )
+
+
+@router.post("/documents/{document_id}/confirm", status_code=201)
+async def confirm_document(
+    document_id: UUID,
+    body: ConfirmBody,
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> JSONResponse:
+    _validate_confirm_lines(body.lines)
+
+    async with db.pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT id FROM document WHERE id = %s AND node_id = %s",
+                (document_id, user.node_id),
+            )
+            doc_row = await cur.fetchone()
+            if doc_row is None:
+                raise HTTPException(
+                    status_code=404, detail="documento no encontrado"
+                )
+
+            await cur.execute(
+                """SELECT id, payload
+                   FROM parse_attempt
+                   WHERE document_id = %s
+                   ORDER BY created_at DESC
+                   LIMIT 1""",
+                (document_id,),
+            )
+            attempt_row = await cur.fetchone()
+            if attempt_row is None:
+                raise HTTPException(
+                    status_code=400, detail="el documento no tiene parse_attempt"
+                )
+            attempt_id, original_payload_json = attempt_row
+
+            if original_payload_json is not None:
+                original_payload = ParsePayload.model_validate(original_payload_json)
+                diff_payloads(original_payload, body.lines, body.corrections)
+
+            try:
+                async with conn.transaction():
+                    await cur.execute(
+                        """INSERT INTO operation (node_id, parse_attempt_id, kind,
+                                                  operation_date, status, confirmed_at)
+                           VALUES (%s, %s, 'order',
+                                   COALESCE(
+                                       %s,
+                                       ((SELECT uploaded_at FROM document WHERE id = %s)
+                                        AT TIME ZONE 'America/Argentina/Buenos_Aires')::date
+                                   ),
+                                   'confirmed', now())
+                           RETURNING id""",
+                        (
+                            user.node_id,
+                            attempt_id,
+                            body.operation_date,
+                            document_id,
+                        ),
+                    )
+                    (operation_id,) = await cur.fetchone()
+
+                    for idx, line in enumerate(body.lines, start=1):
+                        await cur.execute(
+                            """INSERT INTO operation_line
+                                   (operation_id, product, quantity, unit,
+                                    raw_text, line_no, page)
+                               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                            (
+                                operation_id,
+                                line.product,
+                                line.quantity,
+                                line.unit,
+                                line.raw_text,
+                                idx,
+                                line.page,
+                            ),
+                        )
+
+                    for corr in body.corrections:
+                        await cur.execute(
+                            """INSERT INTO correction
+                                   (parse_attempt_id, line_no, field,
+                                    original_value, corrected_value)
+                               VALUES (%s, %s, %s, %s, %s)""",
+                            (
+                                attempt_id,
+                                corr.line_no,
+                                corr.field,
+                                corr.original_value,
+                                corr.corrected_value,
+                            ),
+                        )
+
+                    await cur.execute(
+                        "UPDATE parse_attempt SET is_winner = true WHERE id = %s",
+                        (attempt_id,),
+                    )
+            except psycopg.errors.UniqueViolation:
+                raise HTTPException(status_code=409, detail="ya confirmado") from None
+
+    return JSONResponse({"operation_id": str(operation_id)}, status_code=201)
