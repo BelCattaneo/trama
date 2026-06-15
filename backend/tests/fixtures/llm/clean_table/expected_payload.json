@@ -1,0 +1,19 @@
+{
+  "lines": [
+    {
+      "product": "tomate perita",
+      "quantity": 5.0,
+      "unit": "kg",
+      "raw_text": "tomate perita 5kg",
+      "page": 1
+    },
+    {
+      "product": "lechuga",
+      "quantity": 3.0,
+      "unit": "unidad",
+      "raw_text": "lechuga 3 unidades",
+      "page": 1
+    }
+  ],
+  "warnings": []
+}
