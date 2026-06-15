@@ -8,6 +8,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from trama import db
+from trama.parsing.orchestrator import run_parse
+from trama.parsing.schema import ParsePayload
 from trama.sessions import AuthUser, require_user
 from trama.storage import Storage
 
@@ -23,8 +25,25 @@ class DocumentOut(BaseModel):
     uploaded_at: datetime
 
 
+class ParseAttemptOut(BaseModel):
+    id: UUID
+    strategy: str
+    confidence: float
+    payload: ParsePayload | None
+    error_message: str | None
+
+
+class UploadResponse(BaseModel):
+    document: DocumentOut
+    parse_attempt: ParseAttemptOut | None
+
+
 class DocumentsListResponse(BaseModel):
     documents: list[DocumentOut]
+
+
+class ReparseResponse(BaseModel):
+    parse_attempt: ParseAttemptOut
 
 
 def detect_mime(data: bytes) -> str | None:
@@ -92,7 +111,7 @@ async def upload_document(
             )
             doc_id, uploaded_at = await cur.fetchone()
 
-    out = DocumentOut(
+    document = DocumentOut(
         id=doc_id,
         original_filename=file.filename,
         mime_type=mime,
@@ -100,6 +119,20 @@ async def upload_document(
         content_hash=content_hash,
         uploaded_at=uploaded_at,
     )
+
+    parse_attempt = None
+    parsed = await run_parse(doc_id, mime, contents)
+    if parsed is not None:
+        attempt_id, result = parsed
+        parse_attempt = ParseAttemptOut(
+            id=attempt_id,
+            strategy=result.strategy,
+            confidence=result.confidence,
+            payload=result.payload,
+            error_message=result.error_message,
+        )
+
+    out = UploadResponse(document=document, parse_attempt=parse_attempt)
     return JSONResponse(out.model_dump(mode="json"), status_code=201)
 
 
@@ -131,3 +164,41 @@ async def list_documents(
             for r in rows
         ]
     )
+
+
+@router.post("/documents/{document_id}/reparse")
+async def reparse_document(
+    request: Request,
+    document_id: UUID,
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> ReparseResponse:
+    async with db.pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """SELECT mime_type, storage_ref
+                   FROM document
+                   WHERE id = %s AND node_id = %s""",
+                (document_id, user.node_id),
+            )
+            row = await cur.fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="documento no encontrado")
+    mime_type, storage_ref = row
+
+    storage: Storage = request.app.state.storage
+    contents = storage.get(storage_ref)
+
+    parsed = await run_parse(document_id, mime_type, contents)
+    if parsed is None:
+        raise HTTPException(
+            status_code=400, detail="este formato todavía no tiene parser"
+        )
+    attempt_id, result = parsed
+    parse_attempt = ParseAttemptOut(
+        id=attempt_id,
+        strategy=result.strategy,
+        confidence=result.confidence,
+        payload=result.payload,
+        error_message=result.error_message,
+    )
+    return ReparseResponse(parse_attempt=parse_attempt)

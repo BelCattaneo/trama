@@ -49,22 +49,25 @@ async def test_upload_xlsx_happy_path(setup):
         )
     assert response.status_code == 201
     body = response.json()
-    assert body["original_filename"] == "pedido_enero.xlsx"
+    doc = body["document"]
+    assert doc["original_filename"] == "pedido_enero.xlsx"
     assert (
-        body["mime_type"]
+        doc["mime_type"]
         == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-    assert body["size_bytes"] == len(data)
-    assert body["content_hash"] == hashlib.sha256(data).hexdigest()
-    assert "storage_ref" not in body
+    assert doc["size_bytes"] == len(data)
+    assert doc["content_hash"] == hashlib.sha256(data).hexdigest()
     assert "storage_ref" not in response.text
+    # parse_attempt present for xlsx; fake bytes are invalid → confidence 0
+    assert body["parse_attempt"] is not None
+    assert body["parse_attempt"]["strategy"] == "deterministic"
 
     async with db.pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
                 """SELECT node_id, original_filename, mime_type, size_bytes
                    FROM document WHERE id = %s""",
-                (body["id"],),
+                (doc["id"],),
             )
             row = await cur.fetchone()
     assert row[0] == setup["node_id"]
@@ -81,7 +84,9 @@ async def test_upload_pdf_happy_path(setup):
             files={"file": ("doc.pdf", PDF_BYTES, "application/octet-stream")},
         )
     assert response.status_code == 201
-    assert response.json()["mime_type"] == "application/pdf"
+    body = response.json()
+    assert body["document"]["mime_type"] == "application/pdf"
+    assert body["parse_attempt"] is None
 
 
 @pytest.mark.asyncio
@@ -93,7 +98,9 @@ async def test_upload_csv_happy_path(setup):
             files={"file": ("lista.csv", CSV_BYTES, "application/octet-stream")},
         )
     assert response.status_code == 201
-    assert response.json()["mime_type"] == "text/csv"
+    body = response.json()
+    assert body["document"]["mime_type"] == "text/csv"
+    assert body["parse_attempt"] is not None
 
 
 @pytest.mark.asyncio
@@ -105,7 +112,9 @@ async def test_upload_png_happy_path(setup):
             files={"file": ("foto.png", PNG_BYTES, "application/octet-stream")},
         )
     assert response.status_code == 201
-    assert response.json()["mime_type"] == "image/png"
+    body = response.json()
+    assert body["document"]["mime_type"] == "image/png"
+    assert body["parse_attempt"] is None
 
 
 @pytest.mark.asyncio
@@ -117,7 +126,9 @@ async def test_upload_jpeg_happy_path(setup):
             files={"file": ("foto.jpg", JPEG_BYTES, "application/octet-stream")},
         )
     assert response.status_code == 201
-    assert response.json()["mime_type"] == "image/jpeg"
+    body = response.json()
+    assert body["document"]["mime_type"] == "image/jpeg"
+    assert body["parse_attempt"] is None
 
 
 @pytest.mark.asyncio
@@ -225,22 +236,24 @@ async def test_duplicate_upload_two_rows_one_physical_file(setup, tmp_path):
             )
         assert r1.status_code == 201
         assert r2.status_code == 201
-        assert r1.json()["id"] != r2.json()["id"]
-        assert r1.json()["content_hash"] == r2.json()["content_hash"]
+        doc1 = r1.json()["document"]
+        doc2 = r2.json()["document"]
+        assert doc1["id"] != doc2["id"]
+        assert doc1["content_hash"] == doc2["content_hash"]
 
         async with db.pool.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     """SELECT storage_ref FROM document
                        WHERE node_id = %s AND content_hash = %s""",
-                    (setup["node_id"], r1.json()["content_hash"]),
+                    (setup["node_id"], doc1["content_hash"]),
                 )
                 rows = await cur.fetchall()
         assert len(rows) == 2
         assert rows[0][0] == rows[1][0]
 
-        prefix = r1.json()["content_hash"][:2]
-        stored = tmp_path / prefix / r1.json()["content_hash"]
+        prefix = doc1["content_hash"][:2]
+        stored = tmp_path / prefix / doc1["content_hash"]
         assert stored.read_bytes() == data
     finally:
         app.state.storage = original_storage

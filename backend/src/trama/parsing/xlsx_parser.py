@@ -8,9 +8,14 @@ from trama.parsing.schema import ParsePayload
 
 def parse_xlsx(stream: BinaryIO) -> ParsePayload:
     """Parse an .xlsx file stream into a ParsePayload.
-    Raises ParseError if no recognizable header row is found.
+    Raises ParseError if no recognizable header row is found or the file is
+    not a valid xlsx.
     """
-    workbook = load_workbook(stream, read_only=True, data_only=True)
+    try:
+        workbook = load_workbook(stream, read_only=True, data_only=True)
+    except Exception as exc:
+        raise ParseError("archivo xlsx inválido") from exc
+
     sheet = workbook.active
     if sheet is None:
         raise ParseError("no se encontraron columnas reconocidas")
