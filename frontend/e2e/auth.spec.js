@@ -35,7 +35,7 @@ test("auth: signup, session persistence, logout, guard, login", async ({
   await page.locator("#signup-address").fill("Av Corrientes 1234, CABA");
   await page.getByRole("button", { name: "Crear cuenta" }).click();
 
-  await expect(page).toHaveURL(/\/upload/);
+  await expect(page).toHaveURL(/\/this-route-does-not-exist/);
 
   await page.reload();
   await expect(page).toHaveURL(/\/upload/);
