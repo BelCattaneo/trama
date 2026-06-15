@@ -67,3 +67,6 @@ Thumbs.db
 # Uploads (local development)
 uploads/
 storage/
+
+# Worktrees
+.worktrees/
