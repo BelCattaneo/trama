@@ -110,7 +110,7 @@ export default function DocumentsList() {
                 <tr key={doc.id}>
                   <td>{doc.original_filename}</td>
                   <td>{dateFormatter.format(new Date(doc.uploaded_at))}</td>
-                  <td>{MIME_LABELS[doc.mime_type]}</td>
+                  <td>{MIME_LABELS[doc.mime_type] ?? "Archivo"}</td>
                 </tr>
               ))}
             </tbody>

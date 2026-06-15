@@ -40,7 +40,7 @@ test("auth: signup, session persistence, logout, guard, login", async ({
   await page.reload();
   await expect(page).toHaveURL(/\/upload/);
 
-  await page.getByRole("button", { name: "Cerrar sesión" }).click();
+  await page.getByRole("button", { name: "Salir" }).click();
   await expect(page).toHaveURL(/\/login/);
 
   await page.goto("/upload");
