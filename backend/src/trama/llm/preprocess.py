@@ -4,6 +4,7 @@ import pypdfium2 as pdfium
 from PIL import Image
 from pillow_heif import register_heif_opener
 
+# Register HEIC as a Pillow plugin so Image.open accepts it.
 register_heif_opener()
 
 MAX_PDF_PAGES = 10
