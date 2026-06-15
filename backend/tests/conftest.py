@@ -95,6 +95,9 @@ async def cleanup_node(node_id, user_id) -> None:
     async with db.pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
+                "DELETE FROM operation WHERE node_id = %s", (node_id,)
+            )
+            await cur.execute(
                 "DELETE FROM document WHERE node_id = %s", (node_id,)
             )
             await cur.execute("DELETE FROM app_user WHERE id = %s", (user_id,))
