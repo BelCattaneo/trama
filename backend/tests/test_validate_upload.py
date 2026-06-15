@@ -33,9 +33,15 @@ def test_accepts_exactly_max_bytes():
     assert _validate_upload(payload) == "application/pdf"
 
 
+def test_accepts_heic():
+    assert (
+        _validate_upload(b"\x00\x00\x00\x20ftypheic" + b"\x00" * 8) == "image/heic"
+    )
+
+
 def test_rejects_unknown_mime():
     with pytest.raises(HTTPException) as exc:
-        _validate_upload(b"\x00\x00\x00\x20ftypheic" + b"\x00" * 8)
+        _validate_upload(b"\x00" * 32)
     assert exc.value.status_code == 400
     assert exc.value.detail == "formato no soportado"
 
