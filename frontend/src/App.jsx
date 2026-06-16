@@ -4,6 +4,7 @@ import RequireAuth from "./components/RequireAuth";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import DocumentsList from "./pages/DocumentsList";
+import MapPage from "./pages/Map";
 import MyOrders from "./pages/MyOrders";
 import OrderDetail from "./pages/OrderDetail";
 import Privacy from "./pages/Privacy";
@@ -69,6 +70,14 @@ export default function App() {
         element={
           <RequireAuth>
             <OrderDetail />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/map"
+        element={
+          <RequireAuth>
+            <MapPage />
           </RequireAuth>
         }
       />
