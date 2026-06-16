@@ -11,6 +11,8 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
 from trama import db
+from trama.cuit import validate_cuit
+from trama.node_routes import ProducerListItem
 from trama.parsing.diff import diff_payloads
 from trama.parsing.orchestrator import run_parse
 from trama.parsing.schema import ConfirmCorrection, ConfirmLine, ParsePayload
@@ -74,9 +76,15 @@ class ReparseResponse(BaseModel):
     parse_attempt: ParseAttemptOut
 
 
+class SupplierDetectionOut(BaseModel):
+    cuit: str | None
+    matched_node: ProducerListItem | None
+
+
 class ReviewResponse(BaseModel):
     document: DocumentOut
     parse_attempt: ReviewParseAttemptOut | None
+    supplier_detection: SupplierDetectionOut | None
 
 
 class ConfirmBody(BaseModel):
@@ -364,6 +372,7 @@ async def review_document(
         uploaded_at=doc_row[5],
     )
     parse_attempt = None
+    supplier_detection = None
     if attempt_row is not None:
         parse_attempt = ReviewParseAttemptOut(
             id=attempt_row[0],
@@ -375,7 +384,41 @@ async def review_document(
             is_winner=attempt_row[6],
             created_at=attempt_row[7],
         )
-    return ReviewResponse(document=document, parse_attempt=parse_attempt)
+        supplier_detection = await _resolve_supplier_detection(attempt_row[3])
+    return ReviewResponse(
+        document=document,
+        parse_attempt=parse_attempt,
+        supplier_detection=supplier_detection,
+    )
+
+
+async def _resolve_supplier_detection(
+    payload: dict | None,
+) -> SupplierDetectionOut | None:
+    if payload is None:
+        return None
+    raw_cuit = payload.get("supplier_cuit")
+    if raw_cuit is None:
+        return None
+    matched_node = None
+    if validate_cuit(raw_cuit):
+        async with db.cursor() as cur:
+            await cur.execute(
+                """SELECT id, display_name, cuit, role, zone_label
+                   FROM node
+                   WHERE REPLACE(cuit, '-', '') = REPLACE(%s, '-', '')""",
+                (raw_cuit,),
+            )
+            row = await cur.fetchone()
+        if row is not None:
+            matched_node = ProducerListItem(
+                id=row[0],
+                display_name=row[1],
+                cuit=row[2],
+                role=row[3],
+                zone_label=row[4],
+            )
+    return SupplierDetectionOut(cuit=raw_cuit, matched_node=matched_node)
 
 
 def _validate_confirm_lines(lines: list[ConfirmLine]) -> None:
