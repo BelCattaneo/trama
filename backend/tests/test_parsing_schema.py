@@ -8,6 +8,27 @@ def test_empty_payload_valid():
     payload = ParsePayload()
     assert payload.lines == []
     assert payload.warnings == []
+    assert payload.supplier_cuit is None
+
+
+def test_payload_with_supplier_cuit():
+    payload = ParsePayload(
+        lines=[ParseLine(product="x", quantity=1.0)],
+        warnings=[],
+        supplier_cuit="20-12345678-9",
+    )
+    assert payload.supplier_cuit == "20-12345678-9"
+
+
+def test_supplier_cuit_roundtrip_json():
+    original = ParsePayload(
+        lines=[ParseLine(product="x", quantity=1.0)],
+        supplier_cuit="30-71234567-8",
+    )
+    s = original.model_dump_json()
+    restored = ParsePayload.model_validate_json(s)
+    assert restored.supplier_cuit == "30-71234567-8"
+    assert restored == original
 
 
 def test_minimal_line():

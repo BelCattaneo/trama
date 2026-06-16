@@ -18,6 +18,7 @@ class ParsePayload(BaseModel):
 
     lines: list[ParseLine] = []
     warnings: list[str] = []
+    supplier_cuit: str | None = None
 
 
 class ConfirmLine(BaseModel):

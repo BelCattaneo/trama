@@ -7,6 +7,7 @@ import structlog
 from pydantic import BaseModel, ConfigDict
 
 from trama import db
+from trama.cuit import validate_cuit
 from trama.llm import get_llm_client
 from trama.llm.preprocess import MAX_PDF_PAGES, pdf_to_images, resize_for_llm
 from trama.parsing._extract import ParseError
@@ -25,7 +26,7 @@ PDF_MIME = "application/pdf"
 _LLM_MIMES = frozenset(
     {"image/jpeg", "image/png", "image/heic", "image/heif", PDF_MIME}
 )
-_LLM_PROMPT_VERSION = "v1"
+_LLM_PROMPT_VERSION = "v2"
 
 CONFIDENCE_EMPTY_LINES = 0.3
 CONFIDENCE_NOISY = 0.5
@@ -114,6 +115,7 @@ async def _run_llm(mime_type: str, contents: bytes, llm_client) -> ParseResult:
     all_lines: list[ParseLine] = []
     all_warnings: list[str] = []
     page_errors: list[str] = []
+    supplier_cuit: str | None = None
 
     multi_page = len(pages) > 1
     page_label = lambda n: f"[p{n}] " if multi_page else ""  # noqa: E731
@@ -135,6 +137,14 @@ async def _run_llm(mime_type: str, contents: bytes, llm_client) -> ParseResult:
 
         all_lines.extend(_tag_lines_with_page(payload, page_num))
         all_warnings.extend(f"{page_label(page_num)}{w}" for w in payload.warnings)
+        if supplier_cuit is None and payload.supplier_cuit is not None:
+            candidate = payload.supplier_cuit
+            if validate_cuit(candidate):
+                supplier_cuit = candidate
+            else:
+                all_warnings.append(
+                    f"{page_label(page_num)}CUIT detectado pero inválido: {candidate}"
+                )
 
     if pdf_truncated:
         all_warnings.append(
@@ -151,7 +161,9 @@ async def _run_llm(mime_type: str, contents: bytes, llm_client) -> ParseResult:
             prompt_version=_LLM_PROMPT_VERSION,
         )
 
-    payload = ParsePayload(lines=all_lines, warnings=all_warnings)
+    payload = ParsePayload(
+        lines=all_lines, warnings=all_warnings, supplier_cuit=supplier_cuit
+    )
     return ParseResult(
         strategy="llm",
         confidence=_compute_confidence(payload),

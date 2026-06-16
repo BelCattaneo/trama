@@ -347,3 +347,79 @@ async def test_preprocess_does_not_block_event_loop(monkeypatch):
     # during the SLEEP_SECONDS sync sleep. Demand at least half the expected ticks.
     expected_ticks = SLEEP_SECONDS / 0.05
     assert ticks >= expected_ticks / 2
+
+
+@pytest.mark.asyncio
+async def test_llm_extracts_valid_supplier_cuit(setup, monkeypatch):
+    payload = {
+        "lines": [
+            {"product": "tomate", "quantity": 1.0, "unit": "kg", "raw_text": "t"}
+        ],
+        "warnings": [],
+        "supplier_cuit": "30-71234567-1",
+    }
+    _stub_with_response(monkeypatch, payload)
+
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.post(
+            "/api/documents",
+            files={"file": ("foto.jpg", _make_jpeg(), "application/octet-stream")},
+        )
+
+    attempt = response.json()["parse_attempt"]
+    assert attempt["payload"]["supplier_cuit"] == "30-71234567-1"
+    assert not any("inválido" in w for w in attempt["payload"]["warnings"])
+    async with db.cursor() as cur:
+        await cur.execute(
+            "SELECT prompt_version FROM parse_attempt WHERE id = %s",
+            (attempt["id"],),
+        )
+        (prompt_version,) = await cur.fetchone()
+    assert prompt_version == "v2"
+
+
+@pytest.mark.asyncio
+async def test_llm_invalid_supplier_cuit_dropped_with_warning(setup, monkeypatch):
+    payload = {
+        "lines": [
+            {"product": "tomate", "quantity": 1.0, "unit": "kg", "raw_text": "t"}
+        ],
+        "warnings": [],
+        "supplier_cuit": "20-00000000-0",
+    }
+    _stub_with_response(monkeypatch, payload)
+
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.post(
+            "/api/documents",
+            files={"file": ("foto.jpg", _make_jpeg(), "application/octet-stream")},
+        )
+
+    attempt = response.json()["parse_attempt"]
+    assert attempt["payload"]["supplier_cuit"] is None
+    warnings = attempt["payload"]["warnings"]
+    assert any("CUIT detectado pero inválido" in w for w in warnings)
+
+
+@pytest.mark.asyncio
+async def test_llm_missing_supplier_cuit_is_null(setup, monkeypatch):
+    payload = {
+        "lines": [
+            {"product": "tomate", "quantity": 1.0, "unit": "kg", "raw_text": "t"}
+        ],
+        "warnings": [],
+    }
+    _stub_with_response(monkeypatch, payload)
+
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.post(
+            "/api/documents",
+            files={"file": ("foto.jpg", _make_jpeg(), "application/octet-stream")},
+        )
+
+    attempt = response.json()["parse_attempt"]
+    assert attempt["payload"]["supplier_cuit"] is None
+    assert not any("CUIT" in w for w in attempt["payload"]["warnings"])
