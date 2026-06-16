@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from psycopg_pool import AsyncConnectionPool
 
 pool: AsyncConnectionPool | None = None
@@ -28,3 +30,11 @@ async def db_ok() -> bool:
         return True
     except Exception:
         return False
+
+
+@asynccontextmanager
+async def cursor():
+    """Yield a cursor + auto-commit; releases connection back to the pool on exit."""
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            yield cur

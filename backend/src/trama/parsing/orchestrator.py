@@ -159,23 +159,22 @@ async def _run_llm(mime_type: str, contents: bytes, llm_client) -> ParseResult:
 
 async def _persist(document_id: UUID, result: ParseResult) -> UUID:
     payload_json = result.payload.model_dump_json() if result.payload else None
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                """INSERT INTO parse_attempt (document_id, strategy, confidence,
-                                              payload, prompt_version, error_message)
-                   VALUES (%s, %s, %s, %s::jsonb, %s, %s)
-                   RETURNING id""",
-                (
-                    document_id,
-                    result.strategy,
-                    result.confidence,
-                    payload_json,
-                    result.prompt_version,
-                    result.error_message,
-                ),
-            )
-            (attempt_id,) = await cur.fetchone()
+    async with db.cursor() as cur:
+        await cur.execute(
+            """INSERT INTO parse_attempt (document_id, strategy, confidence,
+                                          payload, prompt_version, error_message)
+               VALUES (%s, %s, %s, %s::jsonb, %s, %s)
+               RETURNING id""",
+            (
+                document_id,
+                result.strategy,
+                result.confidence,
+                payload_json,
+                result.prompt_version,
+                result.error_message,
+            ),
+        )
+        (attempt_id,) = await cur.fetchone()
     return attempt_id
 
 

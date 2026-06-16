@@ -37,20 +37,19 @@ router = APIRouter(prefix="/api")
 
 @router.get("/me", response_model=MeResponse)
 async def get_me(user: Annotated[AuthUser, Depends(require_user)]):
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                "SELECT id, email, full_name, last_login_at FROM app_user WHERE id = %s",
-                (user.id,),
-            )
-            urow = await cur.fetchone()
-            await cur.execute(
-                """SELECT id, cuit, display_name, role, address_text,
-                          latitude, longitude, zone_label
-                   FROM node WHERE id = %s""",
-                (user.node_id,),
-            )
-            nrow = await cur.fetchone()
+    async with db.cursor() as cur:
+        await cur.execute(
+            "SELECT id, email, full_name, last_login_at FROM app_user WHERE id = %s",
+            (user.id,),
+        )
+        urow = await cur.fetchone()
+        await cur.execute(
+            """SELECT id, cuit, display_name, role, address_text,
+                      latitude, longitude, zone_label
+               FROM node WHERE id = %s""",
+            (user.node_id,),
+        )
+        nrow = await cur.fetchone()
     return MeResponse(
         user=UserOut(id=urow[0], email=urow[1], full_name=urow[2], last_login_at=urow[3]),
         node=NodeOut(

@@ -125,23 +125,22 @@ async def upload_document(
     storage: Storage = request.app.state.storage
     storage_ref = await asyncio.to_thread(storage.save, contents, content_hash)
 
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                """INSERT INTO document (node_id, original_filename, mime_type,
-                                         size_bytes, content_hash, storage_ref)
-                   VALUES (%s, %s, %s, %s, %s, %s)
-                   RETURNING id, uploaded_at""",
-                (
-                    user.node_id,
-                    file.filename,
-                    mime,
-                    len(contents),
-                    content_hash,
-                    storage_ref,
-                ),
-            )
-            doc_id, uploaded_at = await cur.fetchone()
+    async with db.cursor() as cur:
+        await cur.execute(
+            """INSERT INTO document (node_id, original_filename, mime_type,
+                                     size_bytes, content_hash, storage_ref)
+               VALUES (%s, %s, %s, %s, %s, %s)
+               RETURNING id, uploaded_at""",
+            (
+                user.node_id,
+                file.filename,
+                mime,
+                len(contents),
+                content_hash,
+                storage_ref,
+            ),
+        )
+        doc_id, uploaded_at = await cur.fetchone()
 
     document = DocumentOut(
         id=doc_id,
@@ -172,17 +171,16 @@ async def upload_document(
 async def list_documents(
     user: Annotated[AuthUser, Depends(require_user)],
 ) -> DocumentsListResponse:
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                """SELECT id, original_filename, mime_type, size_bytes,
-                          content_hash, uploaded_at
-                   FROM document
-                   WHERE node_id = %s
-                   ORDER BY uploaded_at DESC""",
-                (user.node_id,),
-            )
-            rows = await cur.fetchall()
+    async with db.cursor() as cur:
+        await cur.execute(
+            """SELECT id, original_filename, mime_type, size_bytes,
+                      content_hash, uploaded_at
+               FROM document
+               WHERE node_id = %s
+               ORDER BY uploaded_at DESC""",
+            (user.node_id,),
+        )
+        rows = await cur.fetchall()
     return DocumentsListResponse(
         documents=[
             DocumentOut(
@@ -213,15 +211,14 @@ async def get_document_file(
     document_id: UUID,
     user: Annotated[AuthUser, Depends(require_user)],
 ) -> Response:
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                """SELECT original_filename, mime_type, storage_ref
-                   FROM document
-                   WHERE id = %s AND node_id = %s""",
-                (document_id, user.node_id),
-            )
-            row = await cur.fetchone()
+    async with db.cursor() as cur:
+        await cur.execute(
+            """SELECT original_filename, mime_type, storage_ref
+               FROM document
+               WHERE id = %s AND node_id = %s""",
+            (document_id, user.node_id),
+        )
+        row = await cur.fetchone()
     if row is None:
         raise HTTPException(status_code=404, detail="documento no encontrado")
     original_filename, mime_type, storage_ref = row
@@ -250,15 +247,14 @@ async def reparse_document(
     document_id: UUID,
     user: Annotated[AuthUser, Depends(rate_limit_reparse)],
 ) -> ReparseResponse:
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                """SELECT mime_type, storage_ref
-                   FROM document
-                   WHERE id = %s AND node_id = %s""",
-                (document_id, user.node_id),
-            )
-            row = await cur.fetchone()
+    async with db.cursor() as cur:
+        await cur.execute(
+            """SELECT mime_type, storage_ref
+               FROM document
+               WHERE id = %s AND node_id = %s""",
+            (document_id, user.node_id),
+        )
+        row = await cur.fetchone()
     if row is None:
         raise HTTPException(status_code=404, detail="documento no encontrado")
     mime_type, storage_ref = row
@@ -287,30 +283,29 @@ async def review_document(
     document_id: UUID,
     user: Annotated[AuthUser, Depends(require_user)],
 ) -> ReviewResponse:
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                """SELECT id, original_filename, mime_type, size_bytes,
-                          content_hash, uploaded_at
-                   FROM document
-                   WHERE id = %s AND node_id = %s""",
-                (document_id, user.node_id),
+    async with db.cursor() as cur:
+        await cur.execute(
+            """SELECT id, original_filename, mime_type, size_bytes,
+                      content_hash, uploaded_at
+               FROM document
+               WHERE id = %s AND node_id = %s""",
+            (document_id, user.node_id),
+        )
+        doc_row = await cur.fetchone()
+        if doc_row is None:
+            raise HTTPException(
+                status_code=404, detail="documento no encontrado"
             )
-            doc_row = await cur.fetchone()
-            if doc_row is None:
-                raise HTTPException(
-                    status_code=404, detail="documento no encontrado"
-                )
-            await cur.execute(
-                """SELECT id, strategy, confidence, payload, prompt_version,
-                          error_message, is_winner, created_at
-                   FROM parse_attempt
-                   WHERE document_id = %s
-                   ORDER BY created_at DESC
-                   LIMIT 1""",
-                (document_id,),
-            )
-            attempt_row = await cur.fetchone()
+        await cur.execute(
+            """SELECT id, strategy, confidence, payload, prompt_version,
+                      error_message, is_winner, created_at
+               FROM parse_attempt
+               WHERE document_id = %s
+               ORDER BY created_at DESC
+               LIMIT 1""",
+            (document_id,),
+        )
+        attempt_row = await cur.fetchone()
 
     document = DocumentOut(
         id=doc_row[0],

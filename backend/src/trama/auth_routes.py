@@ -51,13 +51,12 @@ router = APIRouter(prefix="/api/auth")
 
 @router.post("/login")
 async def login(payload: LoginRequest, response: Response):
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                "SELECT id, password_hash FROM app_user WHERE email = %s",
-                (payload.email,),
-            )
-            row = await cur.fetchone()
+    async with db.cursor() as cur:
+        await cur.execute(
+            "SELECT id, password_hash FROM app_user WHERE email = %s",
+            (payload.email,),
+        )
+        row = await cur.fetchone()
 
     if row is None:
         verify_password(payload.password, _DUMMY_HASH)
@@ -67,12 +66,11 @@ async def login(payload: LoginRequest, response: Response):
     if not verify_password(payload.password, password_hash):
         return JSONResponse({"error": "credenciales inválidas"}, status_code=401)
 
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                "UPDATE app_user SET last_login_at = now() WHERE id = %s",
-                (user_id,),
-            )
+    async with db.cursor() as cur:
+        await cur.execute(
+            "UPDATE app_user SET last_login_at = now() WHERE id = %s",
+            (user_id,),
+        )
 
     session = await create_session(user_id)
     set_session_cookie(response, session.id)
@@ -108,35 +106,34 @@ async def signup(payload: SignupRequest, response: Response):
     password_hash = hash_password(payload.password)
 
     try:
-        async with db.pool.connection() as conn:
-            async with conn.cursor() as cur:
-                await cur.execute(
-                    """
-                    INSERT INTO node (cuit, display_name, role,
-                                      address_text, latitude, longitude, zone_label)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    RETURNING id
-                    """,
-                    (
-                        payload.cuit,
-                        payload.display_name,
-                        payload.role,
-                        payload.address,
-                        latitude,
-                        longitude,
-                        zone_label,
-                    ),
-                )
-                (node_id,) = await cur.fetchone()
-                await cur.execute(
-                    """
-                    INSERT INTO app_user (node_id, email, password_hash, full_name)
-                    VALUES (%s, %s, %s, %s)
-                    RETURNING id
-                    """,
-                    (node_id, payload.email, password_hash, payload.full_name),
-                )
-                (user_id,) = await cur.fetchone()
+        async with db.cursor() as cur:
+            await cur.execute(
+                """
+                INSERT INTO node (cuit, display_name, role,
+                                  address_text, latitude, longitude, zone_label)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (
+                    payload.cuit,
+                    payload.display_name,
+                    payload.role,
+                    payload.address,
+                    latitude,
+                    longitude,
+                    zone_label,
+                ),
+            )
+            (node_id,) = await cur.fetchone()
+            await cur.execute(
+                """
+                INSERT INTO app_user (node_id, email, password_hash, full_name)
+                VALUES (%s, %s, %s, %s)
+                RETURNING id
+                """,
+                (node_id, payload.email, password_hash, payload.full_name),
+            )
+            (user_id,) = await cur.fetchone()
     except psycopg.errors.UniqueViolation as exc:
         constraint = (exc.diag.constraint_name or "") if exc.diag else ""
         if "cuit" in constraint:
