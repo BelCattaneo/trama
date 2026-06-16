@@ -1,3 +1,4 @@
+import asyncio
 import io
 from collections.abc import Callable
 from uuid import UUID
@@ -92,7 +93,9 @@ def _tag_lines_with_page(payload: ParsePayload, page: int) -> list[ParseLine]:
 
 async def _run_llm(mime_type: str, contents: bytes, llm_client) -> ParseResult:
     try:
-        pages, pdf_truncated = _prepare_pages(mime_type, contents)
+        pages, pdf_truncated = await asyncio.to_thread(
+            _prepare_pages, mime_type, contents
+        )
     except Exception as exc:  # noqa: BLE001
         logger.exception(
             "llm_preprocess_failed",

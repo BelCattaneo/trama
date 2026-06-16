@@ -1,11 +1,14 @@
+import asyncio
 import io
 import json
+import time
 
 import pytest
 import pytest_asyncio
 from PIL import Image
 
 from trama import db
+from trama.parsing.orchestrator import _run_llm
 from trama.sessions import COOKIE_NAME
 
 from .conftest import client
@@ -289,3 +292,58 @@ async def test_reparse_llm_document_creates_new_attempt(setup, monkeypatch):
             )
             (count,) = await cur.fetchone()
     assert count == 2
+
+
+@pytest.mark.asyncio
+async def test_preprocess_does_not_block_event_loop(monkeypatch):
+    """Slow preprocess must run off the loop so concurrent tasks keep progressing."""
+    SLEEP_SECONDS = 1.0
+
+    def _slow_pdf_to_images(pdf_bytes: bytes) -> tuple[list[bytes], bool]:
+        time.sleep(SLEEP_SECONDS)
+        png = io.BytesIO()
+        Image.new("RGB", (50, 50), "white").save(png, format="PNG")
+        return [png.getvalue()], False
+
+    monkeypatch.setattr(
+        "trama.parsing.orchestrator.pdf_to_images", _slow_pdf_to_images
+    )
+
+    class _OkClient:
+        async def parse_image(self, image_bytes: bytes, prompt: str) -> dict:
+            return {
+                "text": '{"lines": [], "warnings": []}',
+                "usage": {
+                    "prompt_tokens": 0,
+                    "completion_tokens": 0,
+                    "total_tokens": 0,
+                },
+                "response_id": None,
+            }
+
+    ticks = 0
+
+    async def _heartbeat() -> None:
+        nonlocal ticks
+        while True:
+            await asyncio.sleep(0.05)
+            ticks += 1
+
+    heartbeat = asyncio.create_task(_heartbeat())
+    try:
+        result = await asyncio.wait_for(
+            _run_llm("application/pdf", b"%PDF-stub", _OkClient()),
+            timeout=SLEEP_SECONDS + 2.0,
+        )
+    finally:
+        heartbeat.cancel()
+        try:
+            await heartbeat
+        except asyncio.CancelledError:
+            pass
+
+    assert result.strategy == "llm"
+    # If preprocess had blocked the loop, the heartbeat would not have ticked
+    # during the SLEEP_SECONDS sync sleep. Demand at least half the expected ticks.
+    expected_ticks = SLEEP_SECONDS / 0.05
+    assert ticks >= expected_ticks / 2
