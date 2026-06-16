@@ -14,12 +14,6 @@ const ROLE_LABELS = {
 };
 
 const ROLE_COLORS = {
-  producer: "var(--accent-primary, #3b7a3f)",
-  consumer: "var(--accent-tertiary, #8ab870)",
-  both: "var(--confidence-medium, #c8a85b)",
-};
-
-const ROLE_COLOR_FALLBACK = {
   producer: "#3b7a3f",
   consumer: "#8ab870",
   both: "#c8a85b",
@@ -45,7 +39,7 @@ function isValidLatLng(node) {
 }
 
 function makePinIcon(role) {
-  const color = ROLE_COLOR_FALLBACK[role] || ROLE_COLOR_FALLBACK.both;
+  const color = ROLE_COLORS[role] ?? ROLE_COLORS.both;
   return L.divIcon({
     className: "map-pin",
     html: `<span class="map-pin__dot" style="background:${color}"></span>`,
@@ -237,8 +231,8 @@ function NodePopup({ node }) {
       <span
         className="map-popup__role"
         style={{
-          background: `${ROLE_COLOR_FALLBACK[node.role]}22`,
-          color: ROLE_COLOR_FALLBACK[node.role],
+          background: `${ROLE_COLORS[node.role]}22`,
+          color: ROLE_COLORS[node.role],
         }}
       >
         {ROLE_LABELS[node.role]}
