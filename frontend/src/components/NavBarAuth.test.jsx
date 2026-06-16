@@ -36,6 +36,31 @@ describe("NavBarAuth", () => {
     expect(screen.getByText(/cooperativa demo/i)).toBeInTheDocument();
   });
 
+  it("renders the four nav tabs in order ending with Mapa", () => {
+    renderNav();
+    const links = screen.getAllByRole("link");
+    const navLinks = links.filter((a) =>
+      a.classList.contains("nav-auth__link"),
+    );
+    expect(navLinks).toHaveLength(4);
+    expect(navLinks[3]).toHaveAttribute("href", "/map");
+    expect(navLinks[3]).toHaveTextContent(/^Mapa$/);
+  });
+
+  it("marks the Mapa tab active when the current route is /map", () => {
+    render(
+      <MemoryRouter initialEntries={["/map"]}>
+        <AuthProvider initialUser={USER}>
+          <Routes>
+            <Route path="/map" element={<NavBarAuth />} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+    const mapaLink = screen.getByRole("link", { name: /^Mapa$/ });
+    expect(mapaLink.className).toMatch(/nav-auth__link--active/);
+  });
+
   it("calls /api/auth/logout and navigates to /login when the logout button is clicked", async () => {
     global.fetch.mockResolvedValue({ ok: true, status: 204 });
     renderNav();
