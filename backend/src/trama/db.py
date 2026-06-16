@@ -33,8 +33,9 @@ async def db_ok() -> bool:
 
 
 @asynccontextmanager
-async def cursor():
+async def cursor(*, row_factory=None):
     """Yield a cursor + auto-commit; releases connection back to the pool on exit."""
+    kw = {"row_factory": row_factory} if row_factory else {}
     async with pool.connection() as conn:
-        async with conn.cursor() as cur:
+        async with conn.cursor(**kw) as cur:
             yield cur

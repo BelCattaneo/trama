@@ -8,6 +8,7 @@ from uuid import UUID
 import psycopg
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
+from psycopg.rows import class_row
 from pydantic import BaseModel
 
 from trama import db
@@ -125,12 +126,13 @@ async def upload_document(
     storage: Storage = request.app.state.storage
     storage_ref = await asyncio.to_thread(storage.save, contents, content_hash)
 
-    async with db.cursor() as cur:
+    async with db.cursor(row_factory=class_row(DocumentOut)) as cur:
         await cur.execute(
             """INSERT INTO document (node_id, original_filename, mime_type,
                                      size_bytes, content_hash, storage_ref)
                VALUES (%s, %s, %s, %s, %s, %s)
-               RETURNING id, uploaded_at""",
+               RETURNING id, original_filename, mime_type, size_bytes,
+                         content_hash, uploaded_at""",
             (
                 user.node_id,
                 file.filename,
@@ -140,19 +142,10 @@ async def upload_document(
                 storage_ref,
             ),
         )
-        doc_id, uploaded_at = await cur.fetchone()
-
-    document = DocumentOut(
-        id=doc_id,
-        original_filename=file.filename,
-        mime_type=mime,
-        size_bytes=len(contents),
-        content_hash=content_hash,
-        uploaded_at=uploaded_at,
-    )
+        document = await cur.fetchone()
 
     parse_attempt = None
-    parsed = await run_parse(doc_id, mime, contents)
+    parsed = await run_parse(document.id, mime, contents)
     if parsed is not None:
         attempt_id, result = parsed
         parse_attempt = ParseAttemptOut(
@@ -171,7 +164,7 @@ async def upload_document(
 async def list_documents(
     user: Annotated[AuthUser, Depends(require_user)],
 ) -> DocumentsListResponse:
-    async with db.cursor() as cur:
+    async with db.cursor(row_factory=class_row(DocumentOut)) as cur:
         await cur.execute(
             """SELECT id, original_filename, mime_type, size_bytes,
                       content_hash, uploaded_at
@@ -180,20 +173,8 @@ async def list_documents(
                ORDER BY uploaded_at DESC""",
             (user.node_id,),
         )
-        rows = await cur.fetchall()
-    return DocumentsListResponse(
-        documents=[
-            DocumentOut(
-                id=r[0],
-                original_filename=r[1],
-                mime_type=r[2],
-                size_bytes=r[3],
-                content_hash=r[4],
-                uploaded_at=r[5],
-            )
-            for r in rows
-        ]
-    )
+        documents = await cur.fetchall()
+    return DocumentsListResponse(documents=documents)
 
 
 def _content_disposition(filename: str) -> str:
@@ -283,50 +264,32 @@ async def review_document(
     document_id: UUID,
     user: Annotated[AuthUser, Depends(require_user)],
 ) -> ReviewResponse:
-    async with db.cursor() as cur:
-        await cur.execute(
-            """SELECT id, original_filename, mime_type, size_bytes,
-                      content_hash, uploaded_at
-               FROM document
-               WHERE id = %s AND node_id = %s""",
-            (document_id, user.node_id),
-        )
-        doc_row = await cur.fetchone()
-        if doc_row is None:
-            raise HTTPException(
-                status_code=404, detail="documento no encontrado"
+    async with db.pool.connection() as conn:
+        async with conn.cursor(row_factory=class_row(DocumentOut)) as cur:
+            await cur.execute(
+                """SELECT id, original_filename, mime_type, size_bytes,
+                          content_hash, uploaded_at
+                   FROM document
+                   WHERE id = %s AND node_id = %s""",
+                (document_id, user.node_id),
             )
-        await cur.execute(
-            """SELECT id, strategy, confidence, payload, prompt_version,
-                      error_message, is_winner, created_at
-               FROM parse_attempt
-               WHERE document_id = %s
-               ORDER BY created_at DESC
-               LIMIT 1""",
-            (document_id,),
-        )
-        attempt_row = await cur.fetchone()
+            document = await cur.fetchone()
+            if document is None:
+                raise HTTPException(
+                    status_code=404, detail="documento no encontrado"
+                )
+        async with conn.cursor(row_factory=class_row(ReviewParseAttemptOut)) as cur:
+            await cur.execute(
+                """SELECT id, strategy, confidence, payload, prompt_version,
+                          error_message, is_winner, created_at
+                   FROM parse_attempt
+                   WHERE document_id = %s
+                   ORDER BY created_at DESC
+                   LIMIT 1""",
+                (document_id,),
+            )
+            parse_attempt = await cur.fetchone()
 
-    document = DocumentOut(
-        id=doc_row[0],
-        original_filename=doc_row[1],
-        mime_type=doc_row[2],
-        size_bytes=doc_row[3],
-        content_hash=doc_row[4],
-        uploaded_at=doc_row[5],
-    )
-    parse_attempt = None
-    if attempt_row is not None:
-        parse_attempt = ReviewParseAttemptOut(
-            id=attempt_row[0],
-            strategy=attempt_row[1],
-            confidence=attempt_row[2],
-            payload=attempt_row[3],
-            prompt_version=attempt_row[4],
-            error_message=attempt_row[5],
-            is_winner=attempt_row[6],
-            created_at=attempt_row[7],
-        )
     return ReviewResponse(document=document, parse_attempt=parse_attempt)
 
 
