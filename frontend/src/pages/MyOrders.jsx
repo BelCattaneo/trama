@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Loader, PackageOpen } from "lucide-react";
+import {
+  CalendarClock,
+  ChevronRight,
+  ListChecks,
+  Loader,
+  PackageCheck,
+  PackageOpen,
+} from "lucide-react";
+import ConfidenceBadge from "../components/ConfidenceBadge";
 import NavBarAuth from "../components/NavBarAuth";
 import { apiGet } from "../lib/api";
 import "./MyOrders.css";
@@ -25,6 +33,42 @@ function kindLabel(kind) {
   if (kind === "order") return "pedido";
   if (kind === "offer") return "oferta";
   return kind ?? "";
+}
+
+function operationsCountLabel(count) {
+  if (count === 1) return "1 pedido confirmado";
+  return `${count} pedidos confirmados`;
+}
+
+export function computeStats(operations) {
+  const totalLines = operations.reduce(
+    (sum, op) => sum + (op.line_count ?? 0),
+    0,
+  );
+  const latest = operations.reduce((acc, op) => {
+    if (!op.operation_date) return acc;
+    if (!acc) return op.operation_date;
+    return op.operation_date > acc ? op.operation_date : acc;
+  }, null);
+  return {
+    confirmed: operations.length,
+    totalLines,
+    latestDate: latest,
+  };
+}
+
+function StatCard({ icon: Icon, value, label }) {
+  return (
+    <div className="my-orders-page__stat">
+      <div className="my-orders-page__stat-icon" aria-hidden="true">
+        <Icon size={20} />
+      </div>
+      <div className="my-orders-page__stat-text">
+        <span className="my-orders-page__stat-value">{value}</span>
+        <span className="my-orders-page__stat-label">{label}</span>
+      </div>
+    </div>
+  );
 }
 
 const HIGHLIGHT_MS = 3000;
@@ -89,6 +133,11 @@ export default function MyOrders() {
       <main className="my-orders-page__content">
         <header className="my-orders-page__header">
           <h1 className="my-orders-page__title">Mis pedidos</h1>
+          {state.status === "list" && (
+            <p className="my-orders-page__subtitle">
+              {operationsCountLabel(state.operations.length)}
+            </p>
+          )}
         </header>
 
         {state.status === "loading" && (
@@ -122,52 +171,100 @@ export default function MyOrders() {
         )}
 
         {state.status === "list" && (
-          <OperationsTable
-            operations={state.operations}
-            highlightId={activeHighlight}
-          />
+          <>
+            <StatsBar operations={state.operations} />
+            <OperationsTable
+              operations={state.operations}
+              highlightId={activeHighlight}
+              navigate={navigate}
+            />
+          </>
         )}
       </main>
     </div>
   );
 }
 
-function OperationsTable({ operations, highlightId }) {
+function StatsBar({ operations }) {
+  const stats = computeStats(operations);
+  return (
+    <div className="my-orders-page__stats">
+      <StatCard
+        icon={PackageCheck}
+        value={stats.confirmed}
+        label="Pedidos confirmados"
+      />
+      <StatCard
+        icon={ListChecks}
+        value={stats.totalLines}
+        label="Líneas totales"
+      />
+      <StatCard
+        icon={CalendarClock}
+        value={stats.latestDate ? formatDate(stats.latestDate) : "—"}
+        label="Último pedido"
+      />
+    </div>
+  );
+}
+
+function OperationsTable({ operations, highlightId, navigate }) {
   return (
     <>
-      <table className="my-orders-page__table">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Cantidad de líneas</th>
-            <th>Tipo</th>
-            <th>Acción</th>
-          </tr>
-        </thead>
-        <tbody>
-          {operations.map((op) => {
-            const isHighlighted = op.id === highlightId;
-            const rowClass = isHighlighted
-              ? "my-orders-page__row highlighted-row"
-              : "my-orders-page__row";
-            return (
-              <tr key={op.id} className={rowClass} data-testid={`row-${op.id}`}>
-                <td>{formatDate(op.operation_date)}</td>
-                <td>{op.line_count}</td>
-                <td>{kindLabel(op.kind)}</td>
-                <td>
-                  <Link
-                    to={`/my-orders/${op.id}`}
-                    className="my-orders-page__detail-link"
+      <div className="my-orders-page__table-card">
+        <table className="my-orders-page__table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Origen</th>
+              <th>Líneas</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+              <th aria-hidden="true" />
+            </tr>
+          </thead>
+          <tbody>
+            {operations.map((op) => {
+              const isHighlighted = op.id === highlightId;
+              const rowClass = isHighlighted
+                ? "my-orders-page__row highlighted-row"
+                : "my-orders-page__row";
+              return (
+                <tr
+                  key={op.id}
+                  className={rowClass}
+                  data-testid={`row-${op.id}`}
+                  tabIndex={0}
+                  role="link"
+                  onClick={() => navigate(`/my-orders/${op.id}`)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      navigate(`/my-orders/${op.id}`);
+                    }
+                  }}
+                >
+                  <td>{formatDate(op.operation_date)}</td>
+                  <td className="my-orders-page__origen">
+                    {op.source_filename || "—"}
+                  </td>
+                  <td>{op.line_count}</td>
+                  <td>{kindLabel(op.kind)}</td>
+                  <td>
+                    <ConfidenceBadge status="confirmed" />
+                  </td>
+                  <td
+                    className="my-orders-page__row-chevron"
+                    aria-hidden="true"
                   >
-                    ver detalle
-                  </Link>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                    <ChevronRight size={16} />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
       <ul className="my-orders-page__cards">
         {operations.map((op) => {
           const isHighlighted = op.id === highlightId;
@@ -180,10 +277,14 @@ function OperationsTable({ operations, highlightId }) {
                 <span className="my-orders-page__card-label">Fecha</span>
                 <span>{formatDate(op.operation_date)}</span>
               </div>
+              {op.source_filename && (
+                <div className="my-orders-page__card-row">
+                  <span className="my-orders-page__card-label">Origen</span>
+                  <span>{op.source_filename}</span>
+                </div>
+              )}
               <div className="my-orders-page__card-row">
-                <span className="my-orders-page__card-label">
-                  Cantidad de líneas
-                </span>
+                <span className="my-orders-page__card-label">Líneas</span>
                 <span>{op.line_count}</span>
               </div>
               <div className="my-orders-page__card-row">
