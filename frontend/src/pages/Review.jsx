@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useBlocker, useNavigate, useParams } from "react-router-dom";
-import { CircleAlert, Loader, TriangleAlert } from "lucide-react";
+import { CircleAlert, Loader, Trash2, TriangleAlert } from "lucide-react";
 import NavBarAuth from "../components/NavBarAuth";
-import { apiGet, apiPost } from "../lib/api";
+import { apiDelete, apiGet, apiPost } from "../lib/api";
 import { useReviewState } from "../lib/useReviewState";
 import ReviewPreview from "./ReviewPreview";
 import ReviewLines from "./ReviewLines";
@@ -180,6 +180,31 @@ function ReviewLoaded({ documentId, body }) {
     }
   }
 
+  async function onDelete() {
+    if (
+      !window.confirm(
+        "¿Eliminar este documento? Esta acción no se puede deshacer.",
+      )
+    ) {
+      return;
+    }
+    setSubmitting(true);
+    setToast("");
+    try {
+      const response = await apiDelete(`/api/documents/${documentId}`);
+      if (response.status === 204) {
+        navigate("/documents", { replace: true });
+        return;
+      }
+      const errorBody = await response.json().catch(() => ({}));
+      setToast(errorBody.error || "No pudimos eliminar el documento.");
+    } catch {
+      setToast("No pudimos eliminar el documento.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <div className="page-shell review-page">
       <NavBarAuth />
@@ -235,6 +260,15 @@ function ReviewLoaded({ documentId, body }) {
 
       {!isWinner && (
         <footer className="review-page__footer">
+          <button
+            type="button"
+            className="review-page__delete"
+            disabled={submitting}
+            onClick={onDelete}
+          >
+            <Trash2 size={16} aria-hidden="true" />
+            <span>Eliminar</span>
+          </button>
           <button
             type="button"
             className="review-page__confirm"

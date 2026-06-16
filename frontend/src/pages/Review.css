@@ -348,6 +348,39 @@
   right: 32px;
   bottom: 24px;
   z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.review-page__delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-card);
+  color: var(--error);
+  border: 1px solid var(--error);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.review-page__delete:hover {
+  background: var(--error-bg);
+}
+
+.review-page__delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.review-page__delete:focus-visible {
+  outline: 2px solid var(--error);
+  outline-offset: 2px;
 }
 
 .review-page__confirm {
