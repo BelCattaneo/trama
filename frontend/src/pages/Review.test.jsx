@@ -250,12 +250,12 @@ describe("Review", () => {
     });
     await screen.findByDisplayValue("tomate");
     fireEvent.click(screen.getByRole("button", { name: /agregar línea/i }));
-    expect(screen.getAllByLabelText(/producto/i)).toHaveLength(2);
+    expect(screen.getAllByLabelText(/^producto$/i)).toHaveLength(2);
     const removeButtons = screen.getAllByRole("button", {
       name: /eliminar línea/i,
     });
     fireEvent.click(removeButtons[0]);
-    expect(screen.getAllByLabelText(/producto/i)).toHaveLength(1);
+    expect(screen.getAllByLabelText(/^producto$/i)).toHaveLength(1);
   });
 
   it("highlights unreadable product lines yellow with the placeholder", async () => {
@@ -558,5 +558,110 @@ describe("Review", () => {
       "¿salir sin confirmar? los cambios se perderán",
     );
     expect(screen.queryByTestId("elsewhere")).not.toBeInTheDocument();
+  });
+
+  it("pre-selects matched_node and sends supplier_node_id on confirm", async () => {
+    const body = makeReviewBody();
+    body.supplier_detection = {
+      cuit: "30-71234567-1",
+      matched_node: {
+        id: "supplier-1",
+        display_name: "Cooperativa Nogal",
+        cuit: "30-71234567-1",
+        role: "producer",
+        zone_label: "CABA",
+      },
+    };
+    let confirmInit = null;
+    vi.spyOn(global, "fetch").mockImplementation((url, init) => {
+      if (typeof url === "string" && url.includes("/review")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => body,
+        });
+      }
+      if (typeof url === "string" && url.includes("/confirm")) {
+        confirmInit = init;
+        return Promise.resolve({
+          ok: true,
+          status: 201,
+          json: async () => ({ operation_id: "op-1" }),
+        });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({}) });
+    });
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/review/:document_id",
+          element: (
+            <AuthProvider initialUser={DEFAULT_USER}>
+              <Review />
+            </AuthProvider>
+          ),
+        },
+        {
+          path: "/my-orders",
+          element: <div data-testid="my-orders">my orders</div>,
+        },
+      ],
+      { initialEntries: ["/review/doc-1"] },
+    );
+    render(<RouterProvider router={router} />);
+    await screen.findByText(/Cooperativa Nogal/i);
+    expect(
+      screen.queryByText(/sin productorx asignadx/i),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /confirmar/i }));
+    await waitFor(() => expect(confirmInit).not.toBeNull());
+    const parsedBody = JSON.parse(confirmInit.body);
+    expect(parsedBody.supplier_node_id).toBe("supplier-1");
+  });
+
+  it("shows the inline warning when no supplier and sends null on confirm", async () => {
+    let confirmInit = null;
+    vi.spyOn(global, "fetch").mockImplementation((url, init) => {
+      if (typeof url === "string" && url.includes("/review")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => makeReviewBody(),
+        });
+      }
+      if (typeof url === "string" && url.includes("/confirm")) {
+        confirmInit = init;
+        return Promise.resolve({
+          ok: true,
+          status: 201,
+          json: async () => ({ operation_id: "op-1" }),
+        });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({}) });
+    });
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/review/:document_id",
+          element: (
+            <AuthProvider initialUser={DEFAULT_USER}>
+              <Review />
+            </AuthProvider>
+          ),
+        },
+        {
+          path: "/my-orders",
+          element: <div data-testid="my-orders">my orders</div>,
+        },
+      ],
+      { initialEntries: ["/review/doc-1"] },
+    );
+    render(<RouterProvider router={router} />);
+    await screen.findByDisplayValue("tomate");
+    expect(screen.getByText(/sin productorx asignadx/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /confirmar/i }));
+    await waitFor(() => expect(confirmInit).not.toBeNull());
+    const parsedBody = JSON.parse(confirmInit.body);
+    expect(parsedBody.supplier_node_id).toBeNull();
   });
 });

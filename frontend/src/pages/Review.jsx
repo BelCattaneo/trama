@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useBlocker, useNavigate, useParams } from "react-router-dom";
 import { CircleAlert, Loader, Trash2, TriangleAlert } from "lucide-react";
 import NavBarAuth from "../components/NavBarAuth";
+import ProductorSelector from "../components/ProductorSelector";
 import { apiDelete, apiGet, apiPost } from "../lib/api";
 import { useReviewState } from "../lib/useReviewState";
 import ReviewPreview from "./ReviewPreview";
@@ -72,7 +73,7 @@ export default function Review() {
 
 function ReviewLoaded({ documentId, body }) {
   const navigate = useNavigate();
-  const { document, parse_attempt } = body;
+  const { document, parse_attempt, supplier_detection } = body;
   const payload = useMemo(
     () => parse_attempt?.payload ?? { lines: [], warnings: [] },
     [parse_attempt],
@@ -81,6 +82,9 @@ function ReviewLoaded({ documentId, body }) {
   const errorMessage = parse_attempt?.error_message ?? null;
   const isWinner = parse_attempt?.is_winner ?? false;
   const isPdf = document.mime_type === "application/pdf";
+
+  const initialSupplierNodeId = supplier_detection?.matched_node?.id ?? null;
+  const [supplierNodeId, setSupplierNodeId] = useState(initialSupplierNodeId);
 
   const {
     lines,
@@ -107,8 +111,9 @@ function ReviewLoaded({ documentId, body }) {
   const [toast, setToast] = useState("");
 
   const hasUnsavedChanges = useMemo(
-    () => getCorrections().length > 0,
-    [getCorrections],
+    () =>
+      getCorrections().length > 0 || supplierNodeId !== initialSupplierNodeId,
+    [getCorrections, supplierNodeId, initialSupplierNodeId],
   );
 
   const blocker = useBlocker(
@@ -165,6 +170,7 @@ function ReviewLoaded({ documentId, body }) {
       const response = await apiPost(`/api/documents/${documentId}/confirm`, {
         lines: getFinalPayload().lines,
         corrections: getCorrections(),
+        supplier_node_id: supplierNodeId,
       });
       if (response.status === 200 || response.status === 201) {
         const result = await response.json();
@@ -240,6 +246,17 @@ function ReviewLoaded({ documentId, body }) {
               onToggle={() => setWarningsOpen((current) => !current)}
               hasError={!!errorMessage || confidence === 0}
             />
+            <ProductorSelector
+              detection={supplier_detection}
+              value={supplierNodeId}
+              onChange={setSupplierNodeId}
+            />
+            {supplierNodeId === null && (
+              <p className="review-page__supplier-warning" role="status">
+                Este pedido va a quedar sin productorx asignadx. Podés seguir o
+                seleccionar unx arriba.
+              </p>
+            )}
             <ReviewLines
               lines={visibleLines}
               readOnly={isWinner}
