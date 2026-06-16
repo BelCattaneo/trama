@@ -115,6 +115,9 @@ async def _run_llm(mime_type: str, contents: bytes, llm_client) -> ParseResult:
     all_warnings: list[str] = []
     page_errors: list[str] = []
 
+    multi_page = len(pages) > 1
+    page_label = lambda n: f"[p{n}] " if multi_page else ""  # noqa: E731
+
     for idx, page_bytes in enumerate(pages):
         page_num = idx + 1
         try:
@@ -125,12 +128,13 @@ async def _run_llm(mime_type: str, contents: bytes, llm_client) -> ParseResult:
             logger.exception(
                 "llm_page_failed", page=page_num, error_type=error_type
             )
-            page_errors.append(f"[p{page_num}] página falló: {error_type}")
-            all_warnings.append(f"[p{page_num}] página falló: {error_type}")
+            label = page_label(page_num)
+            page_errors.append(f"{label}página falló: {error_type}")
+            all_warnings.append(f"{label}página falló: {error_type}")
             continue
 
         all_lines.extend(_tag_lines_with_page(payload, page_num))
-        all_warnings.extend(f"[p{page_num}] {w}" for w in payload.warnings)
+        all_warnings.extend(f"{page_label(page_num)}{w}" for w in payload.warnings)
 
     if pdf_truncated:
         all_warnings.append(

@@ -265,6 +265,30 @@ async def get_document_file(
     )
 
 
+@router.delete("/documents/{document_id}", status_code=204)
+async def delete_document(
+    document_id: UUID,
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> Response:
+    async with db.pool.connection() as conn:
+        async with conn.cursor() as cur:
+            try:
+                await cur.execute(
+                    "DELETE FROM document WHERE id = %s AND node_id = %s",
+                    (document_id, user.node_id),
+                )
+            except psycopg.errors.ForeignKeyViolation as err:
+                raise HTTPException(
+                    status_code=409,
+                    detail="este documento ya tiene un pedido confirmado, no se puede borrar",
+                ) from err
+            if cur.rowcount == 0:
+                raise HTTPException(
+                    status_code=404, detail="documento no encontrado"
+                )
+    return Response(status_code=204)
+
+
 @router.post("/documents/{document_id}/reparse")
 async def reparse_document(
     request: Request,

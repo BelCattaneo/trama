@@ -65,3 +65,8 @@ export function apiPostForm(path, formData, init = {}) {
   const { timeoutMs = UPLOAD_TIMEOUT_MS, ...rest } = init;
   return request(path, { method: "POST", body: formData, ...rest }, timeoutMs);
 }
+
+export function apiDelete(path, init = {}) {
+  const { timeoutMs = DEFAULT_TIMEOUT_MS, ...rest } = init;
+  return request(path, { method: "DELETE", ...rest }, timeoutMs);
+}
