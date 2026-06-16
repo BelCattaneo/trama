@@ -370,10 +370,10 @@
   color: var(--error);
   border: 1px solid var(--error);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  padding: 12px 18px;
-  border-radius: 999px;
+  padding: 12px 24px;
+  border-radius: 6px;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
@@ -396,19 +396,19 @@
   background: var(--accent-primary);
   color: var(--foreground-inverse);
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  padding: 14px 28px;
-  border: 2px solid var(--accent-primary);
-  border-radius: 999px;
+  padding: 12px 24px;
+  border: 0;
+  border-radius: 6px;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .review-page__confirm:disabled {
   background: var(--surface-card);
   color: var(--muted-foreground);
-  border-color: var(--border-default);
+  border: 1px solid var(--border-default);
   cursor: not-allowed;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
