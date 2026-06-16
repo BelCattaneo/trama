@@ -18,6 +18,7 @@ export default function NavBarAuth() {
     { to: "/upload", label: labels.action },
     { to: "/documents", label: "Mis documentos" },
     { to: "/my-orders", label: labels.nav },
+    { to: "/map", label: "Mapa" },
   ];
 
   return (
