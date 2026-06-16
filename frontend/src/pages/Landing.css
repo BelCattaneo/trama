@@ -66,3 +66,49 @@
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
 }
+
+.landing-page__steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 36px;
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  max-width: 740px;
+  width: 100%;
+}
+
+.landing-page__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.landing-page__step-icon {
+  color: var(--accent-primary);
+}
+
+.landing-page__step-title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground-primary);
+}
+
+.landing-page__step-description {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--foreground-muted);
+}
+
+@media (max-width: 640px) {
+  .landing-page__steps {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    max-width: 360px;
+  }
+}
