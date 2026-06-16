@@ -14,8 +14,10 @@
 
 .my-orders-page__header {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .my-orders-page__title {
@@ -25,10 +27,46 @@
   margin: 0;
 }
 
+.my-orders-page__header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .my-orders-page__subtitle {
   margin: 0;
   color: var(--foreground-secondary);
   font-size: 14px;
+}
+
+.my-orders-page__upload-cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--accent-primary);
+  color: var(--foreground-inverse);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.my-orders-page__upload-cta:hover {
+  background: var(--accent-primary-hover, var(--accent-primary));
+}
+
+.my-orders-page__upload-cta:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .my-orders-page__header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 .my-orders-page__status {
@@ -68,27 +106,49 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 48px 24px;
-  background: var(--surface-card);
-  border-radius: 12px;
+  gap: 20px;
+  padding: 40px;
   text-align: center;
   color: var(--foreground-primary);
 }
 
-.my-orders-page__empty p {
+.my-orders-page__empty-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 9999px;
+  background: #f0ede6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--foreground-muted);
+}
+
+.my-orders-page__empty-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--foreground-primary);
+}
+
+.my-orders-page__empty-desc {
   margin: 0;
   color: var(--foreground-secondary);
+  font-size: 15px;
+  line-height: 1.5;
+  max-width: 400px;
 }
 
 .my-orders-page__empty-cta {
+  display: inline-flex;
+  align-items: center;
   background: var(--accent-primary);
   color: var(--foreground-inverse);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 12px 24px;
+  border-radius: 6px;
   text-decoration: none;
 }
 

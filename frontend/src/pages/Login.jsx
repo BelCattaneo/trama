@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Timer } from "lucide-react";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import NavBarPublic from "../components/NavBarPublic";
@@ -49,12 +50,13 @@ export default function Login() {
       <NavBarPublic hideLoginLink />
       <main className="login-page__content">
         <form className="login-page__card" onSubmit={onSubmit} noValidate>
-          <h1 className="login-page__title">Iniciá sesión</h1>
           {stateMessage && !error && (
-            <p className="login-page__notice" role="status">
-              {stateMessage}
-            </p>
+            <div className="login-page__expired" role="status">
+              <Timer size={16} aria-hidden="true" />
+              <span>{stateMessage}</span>
+            </div>
           )}
+          <h1 className="login-page__title">Iniciá sesión</h1>
           <Input
             label="Email"
             id="login-email"

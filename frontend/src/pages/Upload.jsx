@@ -88,10 +88,13 @@ export default function Upload() {
     <div className="page-shell upload-page">
       <NavBarAuth />
       <main className="upload-page__content">
-        <h1 className="upload-page__title">{labels.action}</h1>
-        <p className="upload-page__lead">
-          Subí tu planilla, foto o PDF. Trama se encarga de interpretarlo.
-        </p>
+        <header className="upload-page__header">
+          <h1 className="upload-page__title">{labels.action}</h1>
+          <p className="upload-page__lead">
+            Subí tu planilla, foto o PDF con el pedido. Trama se encarga de
+            interpretarlo.
+          </p>
+        </header>
 
         {!uploading && (
           <div
@@ -104,7 +107,11 @@ export default function Upload() {
             onDragLeave={onDragLeave}
             onDrop={onDrop}
           >
-            <UploadIcon size={40} aria-hidden="true" />
+            <UploadIcon
+              size={48}
+              aria-hidden="true"
+              className="upload-page__drop-icon"
+            />
             <p className="upload-page__drop-title">Arrastrá tu archivo acá</p>
             <p className="upload-page__drop-sub">o usá el botón de abajo</p>
             <button
@@ -127,17 +134,11 @@ export default function Upload() {
         )}
 
         <p id="upload-formats-hint" className="upload-page__formats">
-          Formatos aceptados: xlsx, csv, jpg, png, heic, pdf · Máximo 10 MB
-        </p>
-
-        <p className="upload-page__privacy-notice">
-          Las fotos, imágenes (incluyendo HEIC) y PDFs se envían a Google Gemini
-          para extraer el contenido. Los archivos xlsx y csv se procesan
-          localmente.{" "}
+          Formatos aceptados: xlsx, csv, jpg, png, heic, pdf · Máximo 10 MB ·
+          Fotos y PDFs se procesan con Google Gemini.{" "}
           <Link to="/privacy" className="upload-page__privacy-link">
             Más info
           </Link>
-          .
         </p>
 
         {uploading && (

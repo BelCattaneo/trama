@@ -74,12 +74,7 @@ describe("Upload", () => {
   it("discloses that photos and PDFs are sent to Google Gemini", () => {
     renderUpload();
     expect(
-      screen.getByText(
-        /fotos, imágenes.*heic.*pdfs se envían a google gemini/i,
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/archivos xlsx y csv se procesan localmente/i),
+      screen.getByText(/fotos y PDFs se procesan con Google Gemini/i),
     ).toBeInTheDocument();
     const link = screen.getByRole("link", { name: /más info/i });
     expect(link).toHaveAttribute("href", "/privacy");

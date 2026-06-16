@@ -70,3 +70,10 @@ export function apiDelete(path, init = {}) {
   const { timeoutMs = DEFAULT_TIMEOUT_MS, ...rest } = init;
   return request(path, { method: "DELETE", ...rest }, timeoutMs);
 }
+
+export function apiPatch(path, body, init = {}) {
+  const { timeoutMs = DEFAULT_TIMEOUT_MS, ...rest } = init;
+  const fetchInit = { method: "PATCH", headers: JSON_HEADERS, ...rest };
+  if (body !== undefined) fetchInit.body = JSON.stringify(body);
+  return request(path, fetchInit, timeoutMs);
+}

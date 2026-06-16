@@ -2,20 +2,29 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 .map-page__content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 24px 24px;
-  max-width: 1200px;
   width: 100%;
-  margin: 0 auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .map-page__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 40px;
+  box-sizing: border-box;
+}
+
+.map-page__header-left {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -23,8 +32,10 @@
 
 .map-page__title {
   margin: 0;
-  font-size: 24px;
-  color: var(--foreground);
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--foreground-primary);
 }
 
 .map-page__subtitle {
@@ -40,27 +51,98 @@
 }
 
 .map-page__filter {
-  padding: 6px 14px;
+  padding: 6px 16px;
   border-radius: 9999px;
   border: 1px solid var(--border-subtle);
   background: var(--surface-card);
-  color: var(--muted-foreground);
+  color: var(--foreground-muted);
   cursor: pointer;
   font: inherit;
   font-size: 13px;
-  opacity: 0.5;
+  font-weight: 500;
+  opacity: 0.55;
+  transition: all 0.15s ease;
 }
 
 .map-page__filter--active {
   opacity: 1;
+  background: var(--accent-primary);
+  color: var(--foreground-inverse);
+  border-color: var(--accent-primary);
+}
+
+.map-page__filter--active span {
+  color: inherit;
 }
 
 .map-page__map {
-  flex: 1;
-  min-height: 60vh;
+  position: relative;
+  height: calc(100vh - 220px);
+  min-height: 400px;
+  margin: 0 40px 24px;
+  border: 1px solid var(--border-subtle);
   border-radius: 12px;
   overflow: hidden;
+  box-sizing: border-box;
+}
+
+.map-page__legend {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: var(--surface-card);
   border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.map-pin--me {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.map-pin--me .map-pin__dot {
+  outline: 3px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.map-pin__label {
+  background: var(--accent-primary);
+  color: var(--foreground-inverse);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.map-page__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--foreground-secondary);
+}
+
+.map-page__legend-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+}
+
+.map-page__map .leaflet-container {
+  height: 100%;
+  width: 100%;
 }
 
 .map-page__status {
@@ -79,10 +161,50 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 48px 24px;
+  gap: 16px;
+  padding: 64px 40px;
   text-align: center;
-  color: var(--muted-foreground);
+  color: var(--foreground-primary);
+}
+
+.map-page__empty-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 9999px;
+  background: #f0ede6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--foreground-muted);
+}
+
+.map-page__empty-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--foreground-primary);
+}
+
+.map-page__empty-desc {
+  margin: 0;
+  max-width: 400px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--foreground-secondary);
+}
+
+.map-page__empty-cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--accent-primary);
+  color: var(--foreground-inverse);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 6px;
+  text-decoration: none;
 }
 
 .map-pin__dot {
@@ -104,6 +226,12 @@
   margin: 0 0 6px;
   font-size: 16px;
   color: var(--foreground);
+}
+
+.map-popup__me-tag {
+  color: var(--accent-primary);
+  font-weight: 600;
+  font-size: 13px;
 }
 
 .map-popup__role {
