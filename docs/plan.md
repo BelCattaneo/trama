@@ -357,10 +357,14 @@ operation
   status            varchar(20)      NOT NULL                 -- CHECK ('confirmed')
   confirmed_at      timestamptz      NOT NULL
   created_at        timestamptz      NOT NULL DEFAULT now()
+  supplier_node_id  uuid             NULL REFERENCES node(id) ON DELETE SET NULL
 
 UNIQUE (parse_attempt_id)
 INDEX (node_id, confirmed_at DESC)
+INDEX (supplier_node_id)
 ```
+
+`supplier_node_id` uses ON DELETE SET NULL so that deregistering a supplier preserves historical operations (with a null pointer) rather than dropping them.
 
 ### `OperationLine`
 
