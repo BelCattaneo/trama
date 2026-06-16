@@ -73,13 +73,17 @@ async def current_user(request: Request) -> AuthUser | None:
     cookie = request.cookies.get(COOKIE_NAME)
     if not cookie:
         return None
-    session = await load_session(cookie)
-    if session is None:
-        return None
     async with db.cursor() as cur:
         await cur.execute(
-            "SELECT id, node_id, email, full_name FROM app_user WHERE id = %s",
-            (session.user_id,),
+            """
+            SELECT u.id, u.node_id, u.email, u.full_name
+            FROM session s
+            JOIN app_user u ON u.id = s.user_id
+            WHERE s.id = %s
+              AND s.revoked_at IS NULL
+              AND s.expires_at > now()
+            """,
+            (cookie,),
         )
         row = await cur.fetchone()
     return AuthUser(*row) if row else None
