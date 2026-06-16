@@ -1,10 +1,15 @@
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
+import psycopg
 from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from trama import db
+from trama.cuit import validate_cuit
+from trama.geocode import geocode
+from trama.rate_limit import rate_limit_upload
 from trama.sessions import AuthUser, require_user
 
 PRODUCER_LIST_LIMIT = 100
@@ -20,6 +25,13 @@ class ProducerListItem(BaseModel):
 
 class ProducersListResponse(BaseModel):
     producers: list[ProducerListItem]
+
+
+class CreateNodeBody(BaseModel):
+    cuit: str
+    display_name: str
+    address: str
+    role: Literal["producer", "both"]
 
 
 router = APIRouter(prefix="/api")
@@ -55,4 +67,53 @@ async def list_producers(
             )
             for row in rows
         ]
+    )
+
+
+@router.post("/nodes", status_code=201, response_model=ProducerListItem)
+async def create_node(
+    body: CreateNodeBody,
+    _user: Annotated[AuthUser, Depends(rate_limit_upload)],
+) -> ProducerListItem | JSONResponse:
+    if not validate_cuit(body.cuit):
+        return JSONResponse({"error": "CUIT inválido"}, status_code=400)
+
+    result = await geocode(body.address)
+    if result is None:
+        return JSONResponse(
+            {"error": "no pudimos ubicar la dirección"}, status_code=400
+        )
+
+    try:
+        async with db.cursor() as cur:
+            await cur.execute(
+                """INSERT INTO node (cuit, display_name, role, address_text,
+                                     latitude, longitude, zone_label)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)
+                   RETURNING id, display_name, cuit, role, zone_label""",
+                (
+                    body.cuit,
+                    body.display_name,
+                    body.role,
+                    body.address,
+                    result.latitude,
+                    result.longitude,
+                    result.zone_label,
+                ),
+            )
+            row = await cur.fetchone()
+    except psycopg.errors.UniqueViolation as exc:
+        constraint = (exc.diag.constraint_name or "") if exc.diag else ""
+        if "cuit" in constraint:
+            return JSONResponse(
+                {"error": "CUIT ya registrado"}, status_code=409
+            )
+        raise
+
+    return ProducerListItem(
+        id=row[0],
+        display_name=row[1],
+        cuit=row[2],
+        role=row[3],
+        zone_label=row[4],
     )
