@@ -14,6 +14,7 @@ from trama import db
 from trama.parsing.diff import diff_payloads
 from trama.parsing.orchestrator import run_parse
 from trama.parsing.schema import ConfirmCorrection, ConfirmLine, ParsePayload
+from trama.rate_limit import rate_limit_reparse, rate_limit_upload
 from trama.sessions import AuthUser, require_user
 from trama.storage import Storage
 
@@ -116,7 +117,7 @@ router = APIRouter(prefix="/api")
 async def upload_document(
     request: Request,
     file: Annotated[UploadFile, File()],
-    user: Annotated[AuthUser, Depends(require_user)],
+    user: Annotated[AuthUser, Depends(rate_limit_upload)],
 ):
     contents = await file.read()
     mime = _validate_upload(contents)
@@ -247,7 +248,7 @@ async def get_document_file(
 async def reparse_document(
     request: Request,
     document_id: UUID,
-    user: Annotated[AuthUser, Depends(require_user)],
+    user: Annotated[AuthUser, Depends(rate_limit_reparse)],
 ) -> ReparseResponse:
     async with db.pool.connection() as conn:
         async with conn.cursor() as cur:
