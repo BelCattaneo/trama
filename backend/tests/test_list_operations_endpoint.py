@@ -99,6 +99,7 @@ async def test_list_three_operations_sorted_with_line_counts(setup):
             "operation_date",
             "confirmed_at",
             "line_count",
+            "source_filename",
         }
 
 

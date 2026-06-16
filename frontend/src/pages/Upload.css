@@ -70,7 +70,7 @@
 
 .upload-page__pick:hover {
   background: var(--accent-primary);
-  color: var(--surface-inverse);
+  color: var(--foreground-inverse);
 }
 
 .upload-page__pick:focus-visible {

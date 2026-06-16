@@ -30,6 +30,18 @@ class DocumentOut(BaseModel):
     uploaded_at: datetime
 
 
+class DocumentListItem(BaseModel):
+    id: UUID
+    original_filename: str
+    mime_type: str
+    size_bytes: int
+    uploaded_at: datetime
+    latest_confidence: float | None
+    latest_error_message: str | None
+    has_winner: bool
+    has_parse_attempt: bool
+
+
 class ParseAttemptOut(BaseModel):
     id: UUID
     strategy: str
@@ -55,7 +67,7 @@ class UploadResponse(BaseModel):
 
 
 class DocumentsListResponse(BaseModel):
-    documents: list[DocumentOut]
+    documents: list[DocumentListItem]
 
 
 class ReparseResponse(BaseModel):
@@ -173,23 +185,35 @@ async def list_documents(
 ) -> DocumentsListResponse:
     async with db.cursor() as cur:
         await cur.execute(
-            """SELECT id, original_filename, mime_type, size_bytes,
-                      content_hash, uploaded_at
-               FROM document
-               WHERE node_id = %s
-               ORDER BY uploaded_at DESC""",
+            """SELECT d.id, d.original_filename, d.mime_type, d.size_bytes,
+                      d.uploaded_at,
+                      pa.confidence, pa.error_message,
+                      pa.is_winner, pa.id IS NOT NULL AS has_attempt
+               FROM document d
+               LEFT JOIN LATERAL (
+                   SELECT id, confidence, error_message, is_winner
+                   FROM parse_attempt
+                   WHERE document_id = d.id
+                   ORDER BY is_winner DESC, created_at DESC
+                   LIMIT 1
+               ) pa ON true
+               WHERE d.node_id = %s
+               ORDER BY d.uploaded_at DESC""",
             (user.node_id,),
         )
         rows = await cur.fetchall()
     return DocumentsListResponse(
         documents=[
-            DocumentOut(
+            DocumentListItem(
                 id=r[0],
                 original_filename=r[1],
                 mime_type=r[2],
                 size_bytes=r[3],
-                content_hash=r[4],
-                uploaded_at=r[5],
+                uploaded_at=r[4],
+                latest_confidence=r[5],
+                latest_error_message=r[6],
+                has_winner=bool(r[7]) if r[7] is not None else False,
+                has_parse_attempt=bool(r[8]),
             )
             for r in rows
         ]

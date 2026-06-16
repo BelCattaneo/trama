@@ -17,7 +17,7 @@ export default function NavBarAuth() {
   const navLinks = [
     { to: "/upload", label: labels.action },
     { to: "/documents", label: "Mis documentos" },
-    { to: "/operations", label: labels.nav },
+    { to: "/my-orders", label: labels.nav },
   ];
 
   return (

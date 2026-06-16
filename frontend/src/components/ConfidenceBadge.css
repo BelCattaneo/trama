@@ -1,0 +1,49 @@
+.confidence-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.confidence-badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.confidence-badge--high {
+  background: var(--success-bg);
+  color: var(--confidence-high);
+}
+
+.confidence-badge--medium {
+  background: var(--warning-bg);
+  color: var(--confidence-medium);
+}
+
+.confidence-badge--low {
+  background: var(--warning-bg);
+  color: var(--confidence-medium);
+}
+
+.confidence-badge--error {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+.confidence-badge--pending {
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+
+.confidence-badge--confirmed {
+  background: var(--success-bg);
+  color: var(--confidence-high);
+}

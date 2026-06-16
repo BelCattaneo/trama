@@ -9,7 +9,7 @@ import {
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider } from "../contexts/AuthContext";
-import MyOrders from "./MyOrders";
+import MyOrders, { computeStats } from "./MyOrders";
 
 const USER = {
   user: { id: "u", email: "demo@example.com", full_name: "Demo" },
@@ -23,6 +23,7 @@ const OPERATIONS = [
     line_count: 5,
     kind: "order",
     confirmed_at: "2026-03-17T18:00:00Z",
+    source_filename: "pedido-marzo.xlsx",
   },
   {
     id: "op-2",
@@ -30,6 +31,7 @@ const OPERATIONS = [
     line_count: 8,
     kind: "order",
     confirmed_at: "2026-03-10T12:00:00Z",
+    source_filename: "lista-frutas.csv",
   },
   {
     id: "op-3",
@@ -37,6 +39,7 @@ const OPERATIONS = [
     line_count: 3,
     kind: "order",
     confirmed_at: "2026-03-01T09:00:00Z",
+    source_filename: null,
   },
 ];
 
@@ -230,5 +233,59 @@ describe("MyOrders", () => {
     const { unmount } = renderPage();
     unmount();
     expect(abortSignal.aborted).toBe(true);
+  });
+});
+
+describe("computeStats", () => {
+  it("returns zeroes for an empty list", () => {
+    expect(computeStats([])).toEqual({
+      confirmed: 0,
+      totalLines: 0,
+      latestDate: null,
+    });
+  });
+
+  it("counts operations and sums line_count", () => {
+    const stats = computeStats([
+      { operation_date: "2026-03-17", line_count: 5 },
+      { operation_date: "2026-03-10", line_count: 8 },
+      { operation_date: "2026-03-01", line_count: 3 },
+    ]);
+    expect(stats.confirmed).toBe(3);
+    expect(stats.totalLines).toBe(16);
+  });
+
+  it("treats missing line_count as 0", () => {
+    const stats = computeStats([
+      { operation_date: "2026-03-17", line_count: 5 },
+      { operation_date: "2026-03-10" },
+      { operation_date: "2026-03-01", line_count: null },
+    ]);
+    expect(stats.totalLines).toBe(5);
+  });
+
+  it("picks the most recent operation_date lexically (ISO YYYY-MM-DD)", () => {
+    const stats = computeStats([
+      { operation_date: "2026-03-01", line_count: 1 },
+      { operation_date: "2026-03-17", line_count: 1 },
+      { operation_date: "2026-03-10", line_count: 1 },
+    ]);
+    expect(stats.latestDate).toBe("2026-03-17");
+  });
+
+  it("ignores operations with null operation_date when picking latest", () => {
+    const stats = computeStats([
+      { operation_date: null, line_count: 1 },
+      { operation_date: "2026-03-17", line_count: 1 },
+    ]);
+    expect(stats.latestDate).toBe("2026-03-17");
+  });
+
+  it("returns null latestDate if all dates are missing", () => {
+    const stats = computeStats([
+      { operation_date: null, line_count: 1 },
+      { line_count: 2 },
+    ]);
+    expect(stats.latestDate).toBe(null);
   });
 });
