@@ -316,3 +316,50 @@ async def test_low_confidence_xlsx_stays_deterministic(setup):
     assert attempt["confidence"] < 1.0
 
 
+
+
+@pytest.mark.asyncio
+async def test_delete_document_succeeds(setup):
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        upload = await c.post(
+            "/api/documents",
+            files={
+                "file": (
+                    "p.xlsx",
+                    _fixture_bytes("standard.xlsx"),
+                    "application/octet-stream",
+                )
+            },
+        )
+        doc_id = upload.json()["document"]["id"]
+        response = await c.delete(f"/api/documents/{doc_id}")
+    assert response.status_code == 204
+
+    async with db.pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT COUNT(*) FROM document WHERE id = %s", (doc_id,)
+            )
+            (count,) = await cur.fetchone()
+    assert count == 0
+
+
+@pytest.mark.asyncio
+async def test_delete_document_other_node_returns_404(setup):
+    from uuid import uuid4
+
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.delete(f"/api/documents/{uuid4()}")
+    assert response.status_code == 404
+    assert response.json() == {"error": "documento no encontrado"}
+
+
+@pytest.mark.asyncio
+async def test_delete_document_unauthenticated():
+    from uuid import uuid4
+
+    async with client() as c:
+        response = await c.delete(f"/api/documents/{uuid4()}")
+    assert response.status_code == 401
