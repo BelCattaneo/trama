@@ -28,7 +28,7 @@
 
 .docs-page__cta {
   background: var(--accent-primary);
-  color: var(--surface-inverse);
+  color: var(--foreground-inverse);
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: 600;
@@ -107,12 +107,19 @@
 
 .docs-page__empty-cta:hover {
   background: var(--accent-primary);
-  color: var(--surface-inverse);
+  color: var(--foreground-inverse);
 }
 
 .docs-page__empty-cta:focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
+}
+
+.docs-page__table-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .docs-page__table {
@@ -124,11 +131,39 @@
 .docs-page__table th,
 .docs-page__table td {
   text-align: left;
-  padding: 12px 16px;
+  padding: 12px 20px;
   border-bottom: 1px solid var(--border-subtle, var(--border-default));
 }
 
+.docs-page__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
 .docs-page__table th {
+  font-size: 11px;
   font-weight: 600;
-  color: var(--foreground-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  background: var(--muted);
+}
+
+.docs-page__row {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.docs-page__row:hover {
+  background: var(--muted);
+}
+
+.docs-page__row:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: -2px;
+}
+
+.docs-page__row-chevron {
+  width: 32px;
+  text-align: center;
+  color: var(--muted-foreground);
 }

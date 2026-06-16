@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { FileText, Loader } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ChevronRight, FileText, Loader } from "lucide-react";
+import ConfidenceBadge, { documentStatus } from "../components/ConfidenceBadge";
 import NavBarAuth from "../components/NavBarAuth";
 import { useAuth } from "../contexts/AuthContext";
 import { apiGet } from "../lib/api";
@@ -23,6 +24,7 @@ const dateFormatter = new Intl.DateTimeFormat("es-AR", {
 });
 
 export default function DocumentsList() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const labels = operationLabels(user?.node?.role);
   const [state, setState] = useState({ status: "loading", documents: [] });
@@ -97,24 +99,54 @@ export default function DocumentsList() {
         )}
 
         {state.status === "list" && (
-          <table className="docs-page__table">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Fecha</th>
-                <th>Tipo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {state.documents.map((doc) => (
-                <tr key={doc.id}>
-                  <td>{doc.original_filename}</td>
-                  <td>{dateFormatter.format(new Date(doc.uploaded_at))}</td>
-                  <td>{MIME_LABELS[doc.mime_type] ?? "Archivo"}</td>
+          <div className="docs-page__table-card">
+            <table className="docs-page__table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Fecha</th>
+                  <th>Tipo</th>
+                  <th>Estado</th>
+                  <th aria-hidden="true" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {state.documents.map((doc) => {
+                  const status = documentStatus({
+                    hasParseAttempt: doc.has_parse_attempt,
+                    hasWinner: doc.has_winner,
+                    latestConfidence: doc.latest_confidence,
+                    latestErrorMessage: doc.latest_error_message,
+                  });
+                  return (
+                    <tr
+                      key={doc.id}
+                      className="docs-page__row"
+                      tabIndex={0}
+                      role="link"
+                      onClick={() => navigate(`/review/${doc.id}`)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          navigate(`/review/${doc.id}`);
+                        }
+                      }}
+                    >
+                      <td>{doc.original_filename}</td>
+                      <td>{dateFormatter.format(new Date(doc.uploaded_at))}</td>
+                      <td>{MIME_LABELS[doc.mime_type] ?? "Archivo"}</td>
+                      <td>
+                        <ConfidenceBadge status={status} />
+                      </td>
+                      <td className="docs-page__row-chevron" aria-hidden="true">
+                        <ChevronRight size={16} />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </main>
     </div>
