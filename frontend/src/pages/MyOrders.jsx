@@ -163,7 +163,10 @@ export default function MyOrders() {
 
         {state.status === "empty" && (
           <div className="my-orders-page__empty">
-            <div className="my-orders-page__empty-icon-circle" aria-hidden="true">
+            <div
+              className="my-orders-page__empty-icon-circle"
+              aria-hidden="true"
+            >
               <PackageOpen size={28} />
             </div>
             <h2 className="my-orders-page__empty-title">

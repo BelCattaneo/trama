@@ -124,9 +124,7 @@ describe("ProductorSelector — variant C (no detection)", () => {
     const input = screen.getByLabelText(/buscar productorx/i);
     fireEvent.focus(input);
     await waitFor(() =>
-      expect(
-        screen.getByText(/Agregar nuevo productor/i),
-      ).toBeInTheDocument(),
+      expect(screen.getByText(/Agregar nuevo productor/i)).toBeInTheDocument(),
     );
   });
 });

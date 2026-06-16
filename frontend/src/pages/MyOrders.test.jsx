@@ -127,9 +127,7 @@ describe("MyOrders", () => {
     mockOperationsResponse([]);
     renderPage();
     await waitFor(() => {
-      expect(
-        screen.getByText(/todavía no tenés pedidos/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/todavía no tenés pedidos/i)).toBeInTheDocument();
     });
     expect(
       screen.getByRole("link", { name: /subir mi primer pedido/i }),

@@ -94,7 +94,7 @@ async def test_map_unauthenticated(pool_lifecycle):
 
 @pytest.mark.asyncio
 async def test_map_filters_out_nodes_without_any_operations(session_user):
-    """Nodes that never participate in an operation are excluded; the session user is always present."""
+    """Nodes without operations are excluded; the session user is always present."""
     extras = [
         await _insert_node(role="producer", display_name="Productor sin pedidos"),
     ]
