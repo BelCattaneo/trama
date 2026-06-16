@@ -32,7 +32,8 @@ export async function signupAndLogin(page, { tag = "e2e" } = {}) {
   await page.locator("#signup-display-name").fill(displayName);
   await page.locator("#signup-address").fill("Av Corrientes 1234, CABA");
   await page.getByRole("button", { name: "Crear cuenta" }).click();
-  await expect(page).toHaveURL(/\/upload/);
+  await expect(page).toHaveURL(/\/my-orders/);
+  await page.goto("/upload");
   return { email, password, cuit, displayName };
 }
 
@@ -41,5 +42,6 @@ export async function login(page, { email, password }) {
   await page.locator("#login-email").fill(email);
   await page.locator("#login-password").fill(password);
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
-  await expect(page).toHaveURL(/\/upload/);
+  await expect(page).toHaveURL(/\/my-orders/);
+  await page.goto("/upload");
 }

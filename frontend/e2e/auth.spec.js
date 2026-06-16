@@ -18,5 +18,5 @@ test("auth: signup, session persistence, logout, guard, login", async ({
   await page.locator("#login-email").fill(email);
   await page.locator("#login-password").fill(password);
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
-  await expect(page).toHaveURL(/\/upload/);
+  await expect(page).toHaveURL(/\/my-orders/);
 });

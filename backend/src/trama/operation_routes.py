@@ -3,6 +3,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 from trama import db
@@ -135,3 +136,30 @@ async def get_operation(
             for r in line_rows
         ],
     )
+
+
+@router.delete("/operations/{operation_id}", status_code=204)
+async def delete_operation(
+    operation_id: UUID,
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> Response:
+    async with db.cursor() as cur:
+        await cur.execute(
+            """SELECT parse_attempt_id FROM operation
+               WHERE id = %s AND node_id = %s""",
+            (operation_id, user.node_id),
+        )
+        row = await cur.fetchone()
+        if row is None:
+            raise HTTPException(
+                status_code=404, detail="operación no encontrada"
+            )
+        attempt_id = row[0]
+        await cur.execute(
+            "DELETE FROM operation WHERE id = %s", (operation_id,)
+        )
+        await cur.execute(
+            "UPDATE parse_attempt SET is_winner = false WHERE id = %s",
+            (attempt_id,),
+        )
+    return Response(status_code=204)

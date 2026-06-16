@@ -74,6 +74,38 @@
   text-decoration: underline;
 }
 
+.order-detail__delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--error);
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.order-detail__delete:hover {
+  text-decoration: underline;
+}
+
+.order-detail__delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.order-detail__toast {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: var(--error-bg);
+  color: var(--error);
+  border-radius: 6px;
+  font-size: 14px;
+}
+
 .order-detail__file-link:focus-visible,
 .order-detail__csv-link:focus-visible {
   outline: 2px solid var(--accent-primary);

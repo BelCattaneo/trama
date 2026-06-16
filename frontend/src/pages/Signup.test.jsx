@@ -10,7 +10,7 @@ function renderSignup() {
       <AuthProvider initialUser={null}>
         <Routes>
           <Route path="/signup" element={<Signup />} />
-          <Route path="/upload" element={<div>upload landing</div>} />
+          <Route path="/my-orders" element={<div>my-orders landing</div>} />
         </Routes>
       </AuthProvider>
     </MemoryRouter>,
@@ -96,7 +96,7 @@ describe("Signup", () => {
     ).toBeInTheDocument();
   });
 
-  it("submits valid form and navigates to /upload on success", async () => {
+  it("submits valid form and navigates to /my-orders on success", async () => {
     global.fetch.mockImplementation(async (url) => {
       if (url === "/api/auth/signup") {
         return {
@@ -121,7 +121,7 @@ describe("Signup", () => {
     fillForm();
     fireEvent.click(screen.getByRole("button", { name: /crear cuenta/i }));
     await waitFor(() =>
-      expect(screen.getByText(/upload landing/i)).toBeInTheDocument(),
+      expect(screen.getByText(/my-orders landing/i)).toBeInTheDocument(),
     );
     expect(global.fetch).toHaveBeenCalledWith(
       "/api/auth/signup",

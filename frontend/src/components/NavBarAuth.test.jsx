@@ -36,15 +36,17 @@ describe("NavBarAuth", () => {
     expect(screen.getByText(/cooperativa demo/i)).toBeInTheDocument();
   });
 
-  it("renders the four nav tabs in order ending with Mapa", () => {
+  it("renders three nav tabs in the .pen order: Mis pedidos, Subir, Mapa", () => {
     renderNav();
     const links = screen.getAllByRole("link");
     const navLinks = links.filter((a) =>
       a.classList.contains("nav-auth__link"),
     );
-    expect(navLinks).toHaveLength(4);
-    expect(navLinks[3]).toHaveAttribute("href", "/map");
-    expect(navLinks[3]).toHaveTextContent(/^Mapa$/);
+    expect(navLinks).toHaveLength(3);
+    expect(navLinks[0]).toHaveAttribute("href", "/my-orders");
+    expect(navLinks[1]).toHaveAttribute("href", "/upload");
+    expect(navLinks[2]).toHaveAttribute("href", "/map");
+    expect(navLinks[2]).toHaveTextContent(/^Mapa$/);
   });
 
   it("marks the Mapa tab active when the current route is /map", () => {

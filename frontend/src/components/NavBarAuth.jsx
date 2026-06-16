@@ -15,16 +15,15 @@ export default function NavBarAuth() {
   const nodeName = user?.node?.display_name;
   const labels = operationLabels(user?.node?.role);
   const navLinks = [
-    { to: "/upload", label: labels.action },
-    { to: "/documents", label: "Mis documentos" },
     { to: "/my-orders", label: labels.nav },
+    { to: "/upload", label: labels.action },
     { to: "/map", label: "Mapa" },
   ];
 
   return (
     <nav className="nav-auth">
       <div className="nav-auth__left">
-        <Link to="/upload" className="nav-auth__logo">
+        <Link to="/my-orders" className="nav-auth__logo">
           trama
         </Link>
         <ul className="nav-auth__links">

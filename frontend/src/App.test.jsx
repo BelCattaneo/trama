@@ -43,7 +43,7 @@ describe("App routes", () => {
     ).toBeInTheDocument();
   });
 
-  it("redirects authenticated users away from /login to /upload", () => {
+  it("redirects authenticated users away from /login to /my-orders", () => {
     renderAt("/login", {
       user: { id: "u", email: "demo@example.com" },
       node: {
@@ -53,7 +53,7 @@ describe("App routes", () => {
       },
     });
     expect(
-      screen.getByRole("heading", { name: /subir pedido/i }),
+      screen.getByRole("heading", { name: /mis pedidos/i }),
     ).toBeInTheDocument();
   });
 

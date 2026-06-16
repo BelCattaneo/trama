@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Download, ExternalLink, Loader } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  ExternalLink,
+  Loader,
+  Trash2,
+} from "lucide-react";
 import NavBarAuth from "../components/NavBarAuth";
-import { apiGet } from "../lib/api";
+import { apiDelete, apiGet } from "../lib/api";
 import { buildOperationCsv, buildOperationFilename } from "../lib/csv";
 import "./OrderDetail.css";
 
@@ -25,6 +31,7 @@ export default function OrderDetail() {
   const navigate = useNavigate();
   const [state, setState] = useState({ status: "loading" });
   const [toast, setToast] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -99,6 +106,34 @@ export default function OrderDetail() {
   const lines = body.lines ?? [];
   const showPageColumn = lines.some((line) => line.page !== null);
 
+  async function onDelete() {
+    if (
+      !window.confirm(
+        "¿Eliminar este pedido? Esta acción no se puede deshacer.",
+      )
+    ) {
+      return;
+    }
+    setDeleting(true);
+    setToast("");
+    try {
+      const response = await apiDelete(`/api/operations/${body.id}`);
+      if (response.status === 204) {
+        navigate("/my-orders", {
+          replace: true,
+          state: { toast: "pedido eliminado" },
+        });
+        return;
+      }
+      const errorBody = await response.json().catch(() => ({}));
+      setToast(errorBody.error || "No pudimos eliminar el pedido.");
+    } catch {
+      setToast("No pudimos eliminar el pedido.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   function onDownloadCsv() {
     const content = buildOperationCsv(lines);
     const filename = buildOperationFilename({
@@ -148,8 +183,22 @@ export default function OrderDetail() {
                   <span>ver archivo original</span>
                 </a>
               )}
+              <button
+                type="button"
+                className="order-detail__delete"
+                onClick={onDelete}
+                disabled={deleting}
+              >
+                <Trash2 size={16} aria-hidden="true" />
+                <span>eliminar pedido</span>
+              </button>
             </div>
           </div>
+          {toast && (
+            <div className="order-detail__toast" role="alert">
+              {toast}
+            </div>
+          )}
           <dl className="order-detail__meta">
             <div className="order-detail__meta-item">
               <dt>Fecha</dt>

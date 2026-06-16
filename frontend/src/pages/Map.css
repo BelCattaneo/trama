@@ -43,7 +43,7 @@
   padding: 6px 14px;
   border-radius: 9999px;
   border: 1px solid var(--border-subtle);
-  background: var(--surface);
+  background: var(--surface-card);
   color: var(--muted-foreground);
   cursor: pointer;
   font: inherit;

@@ -17,7 +17,7 @@ function renderRouted(initialUser, initialPath = "/login") {
               </RedirectIfAuthed>
             }
           />
-          <Route path="/upload" element={<div>upload landing</div>} />
+          <Route path="/my-orders" element={<div>my-orders landing</div>} />
         </Routes>
       </AuthProvider>
     </MemoryRouter>,
@@ -30,12 +30,12 @@ describe("RedirectIfAuthed", () => {
     expect(screen.getByText(/login form/i)).toBeInTheDocument();
   });
 
-  it("redirects to /upload when there is a session", () => {
+  it("redirects to /my-orders when there is a session", () => {
     renderRouted({
       user: { id: "u", email: "demo@example.com" },
       node: { id: "n" },
     });
-    expect(screen.getByText(/upload landing/i)).toBeInTheDocument();
+    expect(screen.getByText(/my-orders landing/i)).toBeInTheDocument();
     expect(screen.queryByText(/login form/i)).toBeNull();
   });
 });
