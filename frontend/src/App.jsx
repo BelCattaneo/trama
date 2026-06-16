@@ -3,7 +3,6 @@ import RedirectIfAuthed from "./components/RedirectIfAuthed";
 import RequireAuth from "./components/RequireAuth";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
-import DocumentsList from "./pages/DocumentsList";
 import MapPage from "./pages/Map";
 import MyOrders from "./pages/MyOrders";
 import OrderDetail from "./pages/OrderDetail";
@@ -38,14 +37,6 @@ export default function App() {
         element={
           <RequireAuth>
             <Upload />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/documents"
-        element={
-          <RequireAuth>
-            <DocumentsList />
           </RequireAuth>
         }
       />

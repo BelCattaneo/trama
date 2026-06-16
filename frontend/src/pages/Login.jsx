@@ -29,7 +29,7 @@ export default function Login() {
       const response = await apiPost("/api/auth/login", { email, password });
       if (response.ok) {
         await refresh();
-        navigate("/upload");
+        navigate("/my-orders");
         return;
       }
       setError("Credenciales inválidas");

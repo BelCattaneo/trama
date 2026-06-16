@@ -81,7 +81,7 @@ export default function Signup() {
       const response = await apiPost("/api/auth/signup", payload);
       if (response.ok) {
         await refresh();
-        navigate("/upload");
+        navigate("/my-orders");
         return;
       }
       const body = await response.json().catch(() => ({}));

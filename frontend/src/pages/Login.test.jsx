@@ -10,7 +10,7 @@ function renderLogin() {
       <AuthProvider initialUser={null}>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/upload" element={<div>upload landing</div>} />
+          <Route path="/my-orders" element={<div>my-orders landing</div>} />
           <Route path="/signup" element={<div>signup landing</div>} />
         </Routes>
       </AuthProvider>
@@ -56,7 +56,7 @@ describe("Login", () => {
     ).toBeInTheDocument();
   });
 
-  it("navigates to /upload on successful login", async () => {
+  it("navigates to /my-orders on successful login", async () => {
     global.fetch.mockImplementation(async (url) => {
       if (url === "/api/auth/login") {
         return { ok: true, status: 200, json: async () => ({ ok: true }) };
@@ -82,7 +82,7 @@ describe("Login", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /iniciar sesión/i }));
     await waitFor(() =>
-      expect(screen.getByText(/upload landing/i)).toBeInTheDocument(),
+      expect(screen.getByText(/my-orders landing/i)).toBeInTheDocument(),
     );
     expect(global.fetch).toHaveBeenCalledWith(
       "/api/auth/login",
