@@ -1,3 +1,4 @@
+import asyncio
 import time
 from dataclasses import dataclass
 
@@ -9,6 +10,7 @@ TIMEOUT_SECONDS = 5.0
 MIN_INTERVAL = 1.0
 
 _last_call: float = 0.0
+_throttle_lock = asyncio.Lock()
 
 
 @dataclass
@@ -18,21 +20,24 @@ class GeocodingResult:
     zone_label: str | None
 
 
-def _throttle() -> None:
+async def _throttle() -> None:
     global _last_call
-    elapsed = time.monotonic() - _last_call
-    if elapsed < MIN_INTERVAL:
-        time.sleep(MIN_INTERVAL - elapsed)
-    _last_call = time.monotonic()
+    async with _throttle_lock:
+        elapsed = time.monotonic() - _last_call
+        if elapsed < MIN_INTERVAL:
+            await asyncio.sleep(MIN_INTERVAL - elapsed)
+        _last_call = time.monotonic()
 
 
-def geocode(address: str, client: httpx.Client | None = None) -> GeocodingResult | None:
+async def geocode(
+    address: str, client: httpx.AsyncClient | None = None
+) -> GeocodingResult | None:
     own_client = client is None
     if own_client:
-        _throttle()
-        client = httpx.Client(timeout=TIMEOUT_SECONDS)
+        await _throttle()
+        client = httpx.AsyncClient(timeout=TIMEOUT_SECONDS)
     try:
-        response = client.get(
+        response = await client.get(
             NOMINATIM_URL,
             params={
                 "q": address,
@@ -48,7 +53,7 @@ def geocode(address: str, client: httpx.Client | None = None) -> GeocodingResult
         return None
     finally:
         if own_client:
-            client.close()
+            await client.aclose()
 
     if not results:
         return None

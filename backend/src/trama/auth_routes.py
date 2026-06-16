@@ -97,7 +97,7 @@ async def signup(payload: SignupRequest, response: Response):
     if payload.latitude is not None and payload.longitude is not None:
         latitude, longitude, zone_label = payload.latitude, payload.longitude, None
     else:
-        result = geocode(payload.address)
+        result = await geocode(payload.address)
         if result is None:
             return JSONResponse(
                 {"error": "no se pudo ubicar la dirección, ingresá coordenadas manualmente"},

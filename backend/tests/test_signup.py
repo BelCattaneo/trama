@@ -42,7 +42,11 @@ def _email() -> str:
 @pytest.mark.asyncio
 async def test_signup_with_address_geocodes(signup_db, monkeypatch):
     fake = GeocodingResult(latitude=-34.61, longitude=-58.38, zone_label="CABA")
-    monkeypatch.setattr("trama.auth_routes.geocode", lambda _addr: fake)
+
+    async def _stub(_addr):
+        return fake
+
+    monkeypatch.setattr("trama.auth_routes.geocode", _stub)
 
     async with _client() as client:
         response = await client.post(
@@ -76,7 +80,7 @@ async def test_signup_with_address_geocodes(signup_db, monkeypatch):
 async def test_signup_with_manual_coords_skips_geocoding(signup_db, monkeypatch):
     calls: list[str] = []
 
-    def should_not_be_called(_addr):
+    async def should_not_be_called(_addr):
         calls.append(_addr)
         return None
 
@@ -121,10 +125,10 @@ async def test_signup_invalid_cuit(signup_db):
 
 @pytest.mark.asyncio
 async def test_signup_duplicate_cuit(signup_db, monkeypatch):
-    monkeypatch.setattr(
-        "trama.auth_routes.geocode",
-        lambda _: GeocodingResult(latitude=0, longitude=0, zone_label=None),
-    )
+    async def _stub(_):
+        return GeocodingResult(latitude=0, longitude=0, zone_label=None)
+
+    monkeypatch.setattr("trama.auth_routes.geocode", _stub)
     payload = {
         "cuit": VALID_CUIT_C,
         "display_name": "First",
@@ -170,7 +174,10 @@ async def test_signup_duplicate_email(signup_db):
 
 @pytest.mark.asyncio
 async def test_signup_geocoding_fails(signup_db, monkeypatch):
-    monkeypatch.setattr("trama.auth_routes.geocode", lambda _: None)
+    async def _stub(_):
+        return None
+
+    monkeypatch.setattr("trama.auth_routes.geocode", _stub)
 
     async with _client() as client:
         response = await client.post(
