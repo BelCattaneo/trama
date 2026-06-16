@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 from datetime import date, datetime
 from typing import Annotated
@@ -121,7 +122,7 @@ async def upload_document(
     mime = _validate_upload(contents)
     content_hash = hashlib.sha256(contents).hexdigest()
     storage: Storage = request.app.state.storage
-    storage_ref = storage.save(contents, content_hash)
+    storage_ref = await asyncio.to_thread(storage.save, contents, content_hash)
 
     async with db.pool.connection() as conn:
         async with conn.cursor() as cur:
@@ -226,7 +227,7 @@ async def get_document_file(
 
     storage: Storage = request.app.state.storage
     try:
-        contents = storage.get(storage_ref)
+        contents = await asyncio.to_thread(storage.get, storage_ref)
     except FileNotFoundError as err:
         raise HTTPException(
             status_code=500, detail="no se pudo leer el archivo"
@@ -262,7 +263,7 @@ async def reparse_document(
     mime_type, storage_ref = row
 
     storage: Storage = request.app.state.storage
-    contents = storage.get(storage_ref)
+    contents = await asyncio.to_thread(storage.get, storage_ref)
 
     parsed = await run_parse(document_id, mime_type, contents)
     if parsed is None:
