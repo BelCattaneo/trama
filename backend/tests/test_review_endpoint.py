@@ -155,3 +155,129 @@ async def test_review_confirmed_document_returns_is_winner_true(setup):
     assert response.status_code == 200
     body = response.json()
     assert body["parse_attempt"]["is_winner"] is True
+
+
+async def _insert_producer(cuit, display_name="Productor X"):
+    async with db.pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """INSERT INTO node (cuit, display_name, role, latitude, longitude,
+                                     address_text, zone_label)
+                   VALUES (%s, %s, 'producer', -34.6, -58.4, 'X', 'CABA')
+                   RETURNING id""",
+                (cuit, display_name),
+            )
+            (node_id,) = await cur.fetchone()
+    return node_id
+
+
+async def _delete_node(node_id):
+    async with db.pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("DELETE FROM node WHERE id = %s", (node_id,))
+
+
+@pytest.mark.asyncio
+async def test_review_supplier_detection_match(setup):
+    cuit = "30-71234567-1"
+    producer_id = await _insert_producer(cuit, display_name="Cooperativa Nogal")
+    try:
+        doc_id = await _insert_document(setup["node_id"])
+        await _insert_attempt(
+            doc_id,
+            payload={
+                "lines": [{"product": "x", "quantity": 1.0}],
+                "warnings": [],
+                "supplier_cuit": cuit,
+            },
+        )
+        async with client() as c:
+            c.cookies.set(COOKIE_NAME, setup["session_id"])
+            response = await c.get(f"/api/documents/{doc_id}/review")
+        assert response.status_code == 200
+        detection = response.json()["supplier_detection"]
+        assert detection["cuit"] == cuit
+        assert detection["matched_node"]["id"] == str(producer_id)
+        assert detection["matched_node"]["display_name"] == "Cooperativa Nogal"
+        assert detection["matched_node"]["role"] == "producer"
+    finally:
+        await _delete_node(producer_id)
+
+
+@pytest.mark.asyncio
+async def test_review_supplier_detection_no_match(setup):
+    cuit = "30-71234567-1"
+    doc_id = await _insert_document(setup["node_id"])
+    await _insert_attempt(
+        doc_id,
+        payload={
+            "lines": [{"product": "x", "quantity": 1.0}],
+            "warnings": [],
+            "supplier_cuit": cuit,
+        },
+    )
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.get(f"/api/documents/{doc_id}/review")
+    detection = response.json()["supplier_detection"]
+    assert detection["cuit"] == cuit
+    assert detection["matched_node"] is None
+
+
+@pytest.mark.asyncio
+async def test_review_supplier_detection_absent_when_no_cuit_in_payload(setup):
+    doc_id = await _insert_document(setup["node_id"])
+    await _insert_attempt(
+        doc_id,
+        payload={
+            "lines": [{"product": "x", "quantity": 1.0}],
+            "warnings": [],
+        },
+    )
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.get(f"/api/documents/{doc_id}/review")
+    assert response.json()["supplier_detection"] is None
+
+
+@pytest.mark.asyncio
+async def test_review_supplier_detection_invalid_cuit_keeps_raw_no_match(setup):
+    doc_id = await _insert_document(setup["node_id"])
+    bogus = "99-99999999-9"
+    await _insert_attempt(
+        doc_id,
+        payload={
+            "lines": [{"product": "x", "quantity": 1.0}],
+            "warnings": [],
+            "supplier_cuit": bogus,
+        },
+    )
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.get(f"/api/documents/{doc_id}/review")
+    detection = response.json()["supplier_detection"]
+    assert detection["cuit"] == bogus
+    assert detection["matched_node"] is None
+
+
+@pytest.mark.asyncio
+async def test_review_supplier_detection_normalizes_dashes(setup):
+    cuit_no_dashes = "30712345671"
+    producer_id = await _insert_producer(cuit_no_dashes, display_name="Sin guiones")
+    try:
+        doc_id = await _insert_document(setup["node_id"])
+        await _insert_attempt(
+            doc_id,
+            payload={
+                "lines": [{"product": "x", "quantity": 1.0}],
+                "warnings": [],
+                "supplier_cuit": "30-71234567-1",
+            },
+        )
+        async with client() as c:
+            c.cookies.set(COOKIE_NAME, setup["session_id"])
+            response = await c.get(f"/api/documents/{doc_id}/review")
+        detection = response.json()["supplier_detection"]
+        assert detection["matched_node"]["id"] == str(producer_id)
+    finally:
+        await _delete_node(producer_id)
