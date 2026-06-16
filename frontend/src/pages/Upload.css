@@ -89,6 +89,18 @@
   text-align: center;
 }
 
+.upload-page__privacy-notice {
+  margin: 0;
+  color: var(--foreground-secondary);
+  font-size: 13px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.upload-page__privacy-link {
+  color: var(--accent-primary);
+}
+
 .upload-page__status {
   display: flex;
   align-items: flex-start;
