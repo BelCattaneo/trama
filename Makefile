@@ -1,4 +1,4 @@
-.PHONY: help backend frontend db db-down db-logs migrate migrate-dry seed lint test test-frontend test-e2e test-e2e-headed test-e2e-ui
+.PHONY: help backend frontend db db-down db-logs migrate migrate-dry seed seed-demo seed-demo-dry seed-demo-wipe lint test test-frontend test-e2e test-e2e-headed test-e2e-ui
 
 help:
 	@grep -E '^[a-z0-9-]+:' Makefile | sed 's/:.*//'
@@ -26,6 +26,15 @@ migrate-dry:
 
 seed:
 	cd backend && ENV=dev uv run python -m trama.seed_dev
+
+seed-demo:
+	cd backend && uv run python -m trama.seed_demo
+
+seed-demo-dry:
+	cd backend && uv run python -m trama.seed_demo --dry-run
+
+seed-demo-wipe:
+	cd backend && uv run python -m trama.seed_demo --wipe
 
 lint:
 	cd backend && uv run ruff check .
