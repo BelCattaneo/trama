@@ -4,7 +4,7 @@ import Button from "../components/Button";
 import Input from "../components/Input";
 import NavBarPublic from "../components/NavBarPublic";
 import { useAuth } from "../contexts/AuthContext";
-import { apiPost } from "../lib/api";
+import { apiPost, TimeoutError } from "../lib/api";
 import "./Login.css";
 
 export default function Login() {
@@ -33,8 +33,12 @@ export default function Login() {
         return;
       }
       setError("Credenciales inválidas");
-    } catch {
-      setError("No pudimos conectar con el servidor, intentá de nuevo.");
+    } catch (err) {
+      if (err instanceof TimeoutError) {
+        setError("Tardamos demasiado en responder, intentá de nuevo.");
+      } else {
+        setError("No pudimos conectar con el servidor, intentá de nuevo.");
+      }
     } finally {
       setSubmitting(false);
     }
