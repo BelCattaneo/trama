@@ -18,6 +18,7 @@ class OperationListItem(BaseModel):
     operation_date: date
     confirmed_at: datetime
     line_count: int
+    source_filename: str | None
 
 
 class OperationsListResponse(BaseModel):
@@ -56,11 +57,14 @@ async def list_operations(
         async with conn.cursor() as cur:
             await cur.execute(
                 """SELECT o.id, o.kind, o.operation_date, o.confirmed_at,
-                          COUNT(ol.id) AS line_count
+                          COUNT(ol.id) AS line_count,
+                          d.original_filename
                    FROM operation o
                    LEFT JOIN operation_line ol ON ol.operation_id = o.id
+                   LEFT JOIN parse_attempt pa ON pa.id = o.parse_attempt_id
+                   LEFT JOIN document d ON d.id = pa.document_id
                    WHERE o.node_id = %s
-                   GROUP BY o.id
+                   GROUP BY o.id, d.original_filename
                    ORDER BY o.confirmed_at DESC, o.id DESC
                    LIMIT %s OFFSET %s""",
                 (user.node_id, capped_limit, offset),
@@ -79,6 +83,7 @@ async def list_operations(
                 operation_date=r[2],
                 confirmed_at=r[3],
                 line_count=r[4],
+                source_filename=r[5],
             )
             for r in rows
         ],
