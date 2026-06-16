@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import DocumentsList from "./pages/DocumentsList";
 import MyOrders from "./pages/MyOrders";
 import OrderDetail from "./pages/OrderDetail";
+import Privacy from "./pages/Privacy";
 import Review from "./pages/Review";
 import Signup from "./pages/Signup";
 import Upload from "./pages/Upload";
@@ -14,6 +15,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
+      <Route path="/privacy" element={<Privacy />} />
       <Route
         path="/signup"
         element={

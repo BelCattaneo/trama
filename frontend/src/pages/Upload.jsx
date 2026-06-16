@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { CircleAlert, Loader, Upload as UploadIcon } from "lucide-react";
 import NavBarAuth from "../components/NavBarAuth";
 import { useAuth } from "../contexts/AuthContext";
@@ -128,6 +128,16 @@ export default function Upload() {
 
         <p id="upload-formats-hint" className="upload-page__formats">
           Formatos aceptados: xlsx, csv, jpg, png, heic, pdf · Máximo 10 MB
+        </p>
+
+        <p className="upload-page__privacy-notice">
+          Las fotos, imágenes (incluyendo HEIC) y PDFs se envían a Google Gemini
+          para extraer el contenido. Los archivos xlsx y csv se procesan
+          localmente.{" "}
+          <Link to="/privacy" className="upload-page__privacy-link">
+            Más info
+          </Link>
+          .
         </p>
 
         {uploading && (

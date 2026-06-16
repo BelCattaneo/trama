@@ -22,6 +22,13 @@ describe("App routes", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders the privacy page on /privacy", () => {
+    renderAt("/privacy");
+    expect(
+      screen.getByRole("heading", { level: 1, name: /^privacidad$/i }),
+    ).toBeInTheDocument();
+  });
+
   it("renders the signup page on /signup when anonymous", () => {
     renderAt("/signup");
     expect(
