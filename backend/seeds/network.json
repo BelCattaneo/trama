@@ -1,0 +1,265 @@
+{
+  "_about": "Demo seed of the Red Nacional de Alimentos Cooperativos. CUITs are synthetic with valid AFIP checksums — they do NOT identify real entities. Source: public-facing HTML map shared by Bel.",
+  "nodes": [
+    {
+      "cuit": "30-00000001-5",
+      "display_name": "Despensa La Correntosa",
+      "role": "both",
+      "address_text": "Millaqueo 124, Villa La Angostura, Neuquén",
+      "latitude": -40.7649,
+      "longitude": -71.6396,
+      "zone_label": "Patagonia"
+    },
+    {
+      "cuit": "30-00000002-3",
+      "display_name": "La Coope TDF",
+      "role": "both",
+      "address_text": "Int. Miguel Torelli 839, Ushuaia, Tierra del Fuego",
+      "latitude": -54.8185,
+      "longitude": -68.337,
+      "zone_label": "Patagonia"
+    },
+    {
+      "cuit": "30-00000003-1",
+      "display_name": "Cooperativa Surgente",
+      "role": "both",
+      "address_text": "Ingeniero Jacobacci, Río Negro",
+      "latitude": -41.33,
+      "longitude": -69.55,
+      "zone_label": "Patagonia"
+    },
+    {
+      "cuit": "30-00000005-8",
+      "display_name": "Mutual Red Yafutún",
+      "role": "consumer",
+      "address_text": "San Martín de los Andes, Neuquén",
+      "latitude": -40.157,
+      "longitude": -71.353,
+      "zone_label": "Patagonia"
+    },
+    {
+      "cuit": "30-00000006-6",
+      "display_name": "Cooperativa La Wiphala",
+      "role": "producer",
+      "address_text": "Bariloche, Río Negro",
+      "latitude": -41.1335,
+      "longitude": -71.4237,
+      "zone_label": "Patagonia"
+    },
+    {
+      "cuit": "30-00000007-4",
+      "display_name": "COTRAAVI - Mercado San Martín",
+      "role": "both",
+      "address_text": "Aguado 556, San Martín, Mendoza",
+      "latitude": -33.06,
+      "longitude": -68.372,
+      "zone_label": "Cuyo"
+    },
+    {
+      "cuit": "30-00000008-2",
+      "display_name": "COCHIYACO",
+      "role": "producer",
+      "address_text": "Santa Vera Cruz, La Rioja",
+      "latitude": -28.6777,
+      "longitude": -66.9533,
+      "zone_label": "Cuyo"
+    },
+    {
+      "cuit": "30-00000009-0",
+      "display_name": "COFRULAR",
+      "role": "producer",
+      "address_text": "Cinturón hortícola, La Rioja capital",
+      "latitude": -29.394,
+      "longitude": -66.756,
+      "zone_label": "Cuyo"
+    },
+    {
+      "cuit": "30-00000010-4",
+      "display_name": "FERCOA - La Minga",
+      "role": "both",
+      "address_text": "María de Quiroga 2690, La Rioja capital",
+      "latitude": -29.441,
+      "longitude": -66.858,
+      "zone_label": "Cuyo"
+    },
+    {
+      "cuit": "30-00000011-2",
+      "display_name": "Alimentos Cooperativos Monserrat",
+      "role": "both",
+      "address_text": "Moreno 945, CABA",
+      "latitude": -34.6117,
+      "longitude": -58.3797,
+      "zone_label": "Centro"
+    },
+    {
+      "cuit": "30-00000012-0",
+      "display_name": "Alimentos Cooperativos Devoto",
+      "role": "both",
+      "address_text": "Llavallol 4252, Villa Devoto, CABA",
+      "latitude": -34.5939,
+      "longitude": -58.5058,
+      "zone_label": "Centro"
+    },
+    {
+      "cuit": "30-00000013-9",
+      "display_name": "Mercado Solidario Bonpland",
+      "role": "both",
+      "address_text": "Bonpland 1660, Palermo, CABA",
+      "latitude": -34.5837,
+      "longitude": -58.4379,
+      "zone_label": "Centro"
+    },
+    {
+      "cuit": "30-00000014-7",
+      "display_name": "CECOPAF - Alim. Coop. Villa Urquiza",
+      "role": "both",
+      "address_text": "La Pampa 4801, Villa Urquiza, CABA",
+      "latitude": -34.578,
+      "longitude": -58.4774,
+      "zone_label": "Centro"
+    },
+    {
+      "cuit": "30-00000015-5",
+      "display_name": "Monte Adentro Productos Campesinos",
+      "role": "both",
+      "address_text": "Rivadavia 758, Córdoba capital",
+      "latitude": -31.4077,
+      "longitude": -64.1789,
+      "zone_label": "Centro"
+    },
+    {
+      "cuit": "30-00000016-3",
+      "display_name": "Arraigo Cooperativa - Villa Constitución",
+      "role": "both",
+      "address_text": "Córdoba 1144, Villa Constitución, Santa Fe",
+      "latitude": -33.2337,
+      "longitude": -60.3347,
+      "zone_label": "Centro"
+    },
+    {
+      "cuit": "30-00000017-1",
+      "display_name": "Cauqueva",
+      "role": "producer",
+      "address_text": "RN9 Km 1768, Maimará, Jujuy",
+      "latitude": -23.6177,
+      "longitude": -65.409,
+      "zone_label": "NOA"
+    },
+    {
+      "cuit": "30-00000019-8",
+      "display_name": "INTA EEA Abra Pampa",
+      "role": "consumer",
+      "address_text": "Ruta Prov. 11 km 17, Abra Pampa, Jujuy",
+      "latitude": -22.8021,
+      "longitude": -65.8243,
+      "zone_label": "NOA"
+    },
+    {
+      "cuit": "30-00000020-1",
+      "display_name": "Instituto Rodolfo Kusch - UNJU",
+      "role": "consumer",
+      "address_text": "Rivadavia 642, Tilcara, Jujuy",
+      "latitude": -23.5795,
+      "longitude": -65.3938,
+      "zone_label": "NOA"
+    },
+    {
+      "cuit": "30-00000022-8",
+      "display_name": "Coop. El Pongo",
+      "role": "producer",
+      "address_text": "Zona rural, Jujuy",
+      "latitude": -24.337,
+      "longitude": -65.0877,
+      "zone_label": "NOA"
+    },
+    {
+      "cuit": "30-00000023-6",
+      "display_name": "Raíces - Almacén Cooperativo",
+      "role": "both",
+      "address_text": "Necochea 312, Resistencia, Chaco",
+      "latitude": -27.4512,
+      "longitude": -58.9921,
+      "zone_label": "NEA"
+    },
+    {
+      "cuit": "30-00000024-4",
+      "display_name": "Centro Educativo Paulo Freire",
+      "role": "consumer",
+      "address_text": "Donovan 521, Resistencia, Chaco",
+      "latitude": -27.4523,
+      "longitude": -58.9946,
+      "zone_label": "NEA"
+    },
+    {
+      "cuit": "30-00000025-2",
+      "display_name": "Coop. Agro. Uruguay Costa",
+      "role": "producer",
+      "address_text": "Zona yerbatera, Corrientes",
+      "latitude": -28.5,
+      "longitude": -57.5,
+      "zone_label": "NEA"
+    }
+  ],
+  "operations": [
+    {
+      "buyer_cuit": "30-00000011-2",
+      "supplier_cuit": "30-00000006-6",
+      "days_ago": 2,
+      "products": ["miel", "hongos", "hortalizas"]
+    },
+    {
+      "buyer_cuit": "30-00000012-0",
+      "supplier_cuit": "30-00000008-2",
+      "days_ago": 5,
+      "products": ["vino", "aceitunas"]
+    },
+    {
+      "buyer_cuit": "30-00000013-9",
+      "supplier_cuit": "30-00000009-0",
+      "days_ago": 1,
+      "products": ["tomate", "lechuga", "zanahoria"]
+    },
+    {
+      "buyer_cuit": "30-00000013-9",
+      "supplier_cuit": "30-00000017-1",
+      "days_ago": 3,
+      "products": ["fideos de maíz", "dulce de leche de cabra"]
+    },
+    {
+      "buyer_cuit": "30-00000014-7",
+      "supplier_cuit": "30-00000022-8",
+      "days_ago": 4,
+      "products": ["papa andina", "quinoa"]
+    },
+    {
+      "buyer_cuit": "30-00000015-5",
+      "supplier_cuit": "30-00000022-8",
+      "days_ago": 10,
+      "products": ["papa andina"]
+    },
+    {
+      "buyer_cuit": "30-00000016-3",
+      "supplier_cuit": "30-00000025-2",
+      "days_ago": 6,
+      "products": ["yerba mate"]
+    },
+    {
+      "buyer_cuit": "30-00000011-2",
+      "supplier_cuit": "30-00000009-0",
+      "days_ago": 15,
+      "products": ["tomate", "cebolla"]
+    },
+    {
+      "buyer_cuit": "30-00000014-7",
+      "supplier_cuit": "30-00000017-1",
+      "days_ago": 22,
+      "products": ["fideos de maíz"]
+    },
+    {
+      "buyer_cuit": "30-00000013-9",
+      "supplier_cuit": "30-00000006-6",
+      "days_ago": 8,
+      "products": ["miel"]
+    }
+  ]
+}
