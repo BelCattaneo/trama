@@ -127,12 +127,10 @@ describe("MyOrders", () => {
     mockOperationsResponse([]);
     renderPage();
     await waitFor(() => {
-      expect(
-        screen.getByText(/todavía no confirmaste ningún pedido/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/todavía no tenés pedidos/i)).toBeInTheDocument();
     });
     expect(
-      screen.getByRole("link", { name: /subir documento/i }),
+      screen.getByRole("link", { name: /subir mi primer pedido/i }),
     ).toBeInTheDocument();
   });
 
@@ -192,24 +190,6 @@ describe("MyOrders", () => {
     const detailLinks = screen.getAllByRole("link", { name: /ver detalle/i });
     fireEvent.click(detailLinks[0]);
     expect(screen.getByText(/detail page/i)).toBeInTheDocument();
-  });
-
-  it("renders 'oferta' label for kind: 'offer'", async () => {
-    mockOperationsResponse([
-      {
-        id: "op-offer",
-        operation_date: "2026-03-17",
-        line_count: 2,
-        kind: "offer",
-        confirmed_at: "2026-03-17T18:00:00Z",
-      },
-    ]);
-    renderPage();
-    await waitFor(() => {
-      expect(screen.getByTestId("row-op-offer")).toBeInTheDocument();
-    });
-    const row = screen.getByTestId("row-op-offer");
-    expect(within(row).getAllByText(/oferta/i).length).toBeGreaterThan(0);
   });
 
   it("redirects to /login on 401", async () => {

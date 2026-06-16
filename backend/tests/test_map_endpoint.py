@@ -93,23 +93,19 @@ async def test_map_unauthenticated(pool_lifecycle):
 
 
 @pytest.mark.asyncio
-async def test_map_returns_all_nodes_with_zero_counts(session_user):
-    """Nodes without operations show counts=0 and empty top_products."""
-    extras = [await _insert_node(role="producer", display_name="Productor sin pedidos")]
+async def test_map_filters_out_nodes_without_any_operations(session_user):
+    """Nodes without operations are excluded; the session user is always present."""
+    extras = [
+        await _insert_node(role="producer", display_name="Productor sin pedidos"),
+    ]
     try:
         async with client() as c:
             c.cookies.set(COOKIE_NAME, session_user["session_id"])
             response = await c.get("/api/map")
         assert response.status_code == 200
-        body = response.json()
-        names = {n["display_name"]: n for n in body["nodes"]}
-        assert "Productor sin pedidos" in names
-        n = names["Productor sin pedidos"]
-        assert n["orders_last_week"] == 0
-        assert n["orders_total"] == 0
-        assert n["top_products"] == []
-        assert n["latitude"] == -34.6
-        assert n["longitude"] == -58.4
+        names = {n["display_name"] for n in response.json()["nodes"]}
+        assert "Productor sin pedidos" not in names
+        assert any(n["id"] == str(session_user["node_id"]) for n in response.json()["nodes"])
     finally:
         for e in extras:
             await _delete_node(e)
@@ -189,9 +185,13 @@ async def test_map_top_products_capped_at_three(session_user):
 
 @pytest.mark.asyncio
 async def test_map_consumer_only_node_has_zero_supply_stats(session_user):
+    """A consumer that bought from a supplier appears in /map with zero supply stats."""
+    supplier = await _insert_node(role="producer", display_name="Some Supplier")
     consumer = await _insert_node(role="consumer", display_name="Solo Consume")
     try:
-        # session_user is consumer; create an operation where it BUYS from no supplier
+        await _insert_operation_with_lines(
+            buyer_id=consumer, supplier_id=supplier, products=["tomate"],
+        )
         async with client() as c:
             c.cookies.set(COOKIE_NAME, session_user["session_id"])
             response = await c.get("/api/map")
@@ -203,6 +203,7 @@ async def test_map_consumer_only_node_has_zero_supply_stats(session_user):
         assert node["role"] == "consumer"
     finally:
         await _delete_node(consumer)
+        await _delete_node(supplier)
 
 
 @pytest.mark.asyncio
@@ -212,6 +213,12 @@ async def test_map_sorted_alphabetically(session_user):
         await _insert_node(role="producer", display_name="AAA First"),
     ]
     try:
+        for n_id in extras:
+            await _insert_operation_with_lines(
+                buyer_id=session_user["node_id"],
+                supplier_id=n_id,
+                products=["x"],
+            )
         async with client() as c:
             c.cookies.set(COOKIE_NAME, session_user["session_id"])
             response = await c.get("/api/map")

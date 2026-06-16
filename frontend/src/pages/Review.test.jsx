@@ -393,7 +393,7 @@ describe("Review", () => {
         warnings: ["revisar tomate", "revisar zanahoria"],
       }),
     });
-    const label = await screen.findByText(/^2 advertencias$/);
+    const label = await screen.findByText(/^2 cosas para revisar$/);
     expect(screen.getByText("revisar tomate")).toBeInTheDocument();
     fireEvent.click(label);
     expect(screen.queryByText("revisar tomate")).not.toBeInTheDocument();
@@ -401,14 +401,16 @@ describe("Review", () => {
     expect(screen.getByText("revisar tomate")).toBeInTheDocument();
   });
 
-  it("singular warning header reads '1 advertencia'", async () => {
+  it("singular warning header reads '1 cosa para revisar'", async () => {
     renderReview({
       body: makeReviewBody({
         confidence: 0.4,
         warnings: ["revisar tomate"],
       }),
     });
-    expect(await screen.findByText(/^1 advertencia$/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/^1 cosa para revisar$/),
+    ).toBeInTheDocument();
   });
 
   it("shows the low-confidence warning banner when confidence < 0.5", async () => {
