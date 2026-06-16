@@ -32,44 +32,41 @@ class AuthUser:
 async def create_session(user_id: UUID) -> Session:
     session_id = token_urlsafe(TOKEN_NBYTES)
     expires_at = datetime.now(UTC) + timedelta(days=settings.session_ttl_days)
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                """
-                INSERT INTO session (id, user_id, expires_at)
-                VALUES (%s, %s, %s)
-                RETURNING id, user_id, created_at, expires_at, revoked_at
-                """,
-                (session_id, user_id, expires_at),
-            )
-            row = await cur.fetchone()
+    async with db.cursor() as cur:
+        await cur.execute(
+            """
+            INSERT INTO session (id, user_id, expires_at)
+            VALUES (%s, %s, %s)
+            RETURNING id, user_id, created_at, expires_at, revoked_at
+            """,
+            (session_id, user_id, expires_at),
+        )
+        row = await cur.fetchone()
     return Session(*row)
 
 
 async def load_session(session_id: str) -> Session | None:
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                """
-                SELECT id, user_id, created_at, expires_at, revoked_at
-                FROM session
-                WHERE id = %s
-                  AND revoked_at IS NULL
-                  AND expires_at > now()
-                """,
-                (session_id,),
-            )
-            row = await cur.fetchone()
+    async with db.cursor() as cur:
+        await cur.execute(
+            """
+            SELECT id, user_id, created_at, expires_at, revoked_at
+            FROM session
+            WHERE id = %s
+              AND revoked_at IS NULL
+              AND expires_at > now()
+            """,
+            (session_id,),
+        )
+        row = await cur.fetchone()
     return Session(*row) if row else None
 
 
 async def revoke_session(session_id: str) -> None:
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                "UPDATE session SET revoked_at = now() WHERE id = %s",
-                (session_id,),
-            )
+    async with db.cursor() as cur:
+        await cur.execute(
+            "UPDATE session SET revoked_at = now() WHERE id = %s",
+            (session_id,),
+        )
 
 
 async def current_user(request: Request) -> AuthUser | None:
@@ -79,13 +76,12 @@ async def current_user(request: Request) -> AuthUser | None:
     session = await load_session(cookie)
     if session is None:
         return None
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                "SELECT id, node_id, email, full_name FROM app_user WHERE id = %s",
-                (session.user_id,),
-            )
-            row = await cur.fetchone()
+    async with db.cursor() as cur:
+        await cur.execute(
+            "SELECT id, node_id, email, full_name FROM app_user WHERE id = %s",
+            (session.user_id,),
+        )
+        row = await cur.fetchone()
     return AuthUser(*row) if row else None
 
 

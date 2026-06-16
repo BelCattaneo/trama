@@ -52,25 +52,24 @@ async def list_operations(
     offset: int = Query(0, ge=0),
 ) -> OperationsListResponse:
     capped_limit = min(limit, MAX_LIMIT)
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                """SELECT o.id, o.kind, o.operation_date, o.confirmed_at,
-                          COUNT(ol.id) AS line_count
-                   FROM operation o
-                   LEFT JOIN operation_line ol ON ol.operation_id = o.id
-                   WHERE o.node_id = %s
-                   GROUP BY o.id
-                   ORDER BY o.confirmed_at DESC, o.id DESC
-                   LIMIT %s OFFSET %s""",
-                (user.node_id, capped_limit, offset),
-            )
-            rows = await cur.fetchall()
-            await cur.execute(
-                "SELECT COUNT(*) FROM operation WHERE node_id = %s",
-                (user.node_id,),
-            )
-            (total,) = await cur.fetchone()
+    async with db.cursor() as cur:
+        await cur.execute(
+            """SELECT o.id, o.kind, o.operation_date, o.confirmed_at,
+                      COUNT(ol.id) AS line_count
+               FROM operation o
+               LEFT JOIN operation_line ol ON ol.operation_id = o.id
+               WHERE o.node_id = %s
+               GROUP BY o.id
+               ORDER BY o.confirmed_at DESC, o.id DESC
+               LIMIT %s OFFSET %s""",
+            (user.node_id, capped_limit, offset),
+        )
+        rows = await cur.fetchall()
+        await cur.execute(
+            "SELECT COUNT(*) FROM operation WHERE node_id = %s",
+            (user.node_id,),
+        )
+        (total,) = await cur.fetchone()
     return OperationsListResponse(
         items=[
             OperationListItem(
@@ -91,29 +90,28 @@ async def get_operation(
     operation_id: UUID,
     user: Annotated[AuthUser, Depends(require_user)],
 ) -> OperationDetailOut:
-    async with db.pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                """SELECT o.id, o.kind, o.operation_date, o.confirmed_at,
-                          pa.document_id
-                   FROM operation o
-                   JOIN parse_attempt pa ON pa.id = o.parse_attempt_id
-                   WHERE o.id = %s AND o.node_id = %s""",
-                (operation_id, user.node_id),
+    async with db.cursor() as cur:
+        await cur.execute(
+            """SELECT o.id, o.kind, o.operation_date, o.confirmed_at,
+                      pa.document_id
+               FROM operation o
+               JOIN parse_attempt pa ON pa.id = o.parse_attempt_id
+               WHERE o.id = %s AND o.node_id = %s""",
+            (operation_id, user.node_id),
+        )
+        op_row = await cur.fetchone()
+        if op_row is None:
+            raise HTTPException(
+                status_code=404, detail="operación no encontrada"
             )
-            op_row = await cur.fetchone()
-            if op_row is None:
-                raise HTTPException(
-                    status_code=404, detail="operación no encontrada"
-                )
-            await cur.execute(
-                """SELECT line_no, product, quantity, unit, page
-                   FROM operation_line
-                   WHERE operation_id = %s
-                   ORDER BY line_no ASC""",
-                (operation_id,),
-            )
-            line_rows = await cur.fetchall()
+        await cur.execute(
+            """SELECT line_no, product, quantity, unit, page
+               FROM operation_line
+               WHERE operation_id = %s
+               ORDER BY line_no ASC""",
+            (operation_id,),
+        )
+        line_rows = await cur.fetchall()
 
     return OperationDetailOut(
         id=op_row[0],
