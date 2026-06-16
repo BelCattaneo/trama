@@ -1,0 +1,137 @@
+.map-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.map-page__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 24px 24px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.map-page__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.map-page__title {
+  margin: 0;
+  font-size: 24px;
+  color: var(--foreground);
+}
+
+.map-page__subtitle {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+.map-page__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.map-page__filter {
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  opacity: 0.5;
+}
+
+.map-page__filter--active {
+  opacity: 1;
+}
+
+.map-page__map {
+  flex: 1;
+  min-height: 60vh;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.map-page__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  color: var(--muted-foreground);
+}
+
+.map-page__status--error {
+  color: var(--error);
+}
+
+.map-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+.map-pin__dot {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.map-popup {
+  font-family: var(--font-body, inherit);
+  min-width: 200px;
+  max-width: 280px;
+}
+
+.map-popup__name {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: var(--foreground);
+}
+
+.map-popup__role {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.map-popup__stats {
+  margin: 0 0 4px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.map-popup__products {
+  margin: 0;
+  font-size: 13px;
+  color: var(--foreground);
+}
+
+@media (max-width: 768px) {
+  .map-page__content {
+    padding: 12px 12px 16px;
+  }
+  .map-page__map {
+    min-height: 50vh;
+  }
+}
