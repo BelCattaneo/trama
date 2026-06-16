@@ -59,7 +59,7 @@ describe("ProductorSelector — variant A (matched)", () => {
     ).toBeInTheDocument();
   });
 
-  it("clicking Cambiar shows the dropdown", async () => {
+  it("clicking Cambiar shows the combobox search input", async () => {
     render(
       <ProductorSelector
         detection={{ cuit: MATCHED_NODE.cuit, matched_node: MATCHED_NODE }}
@@ -69,9 +69,7 @@ describe("ProductorSelector — variant A (matched)", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /cambiar/i }));
     await waitFor(() =>
-      expect(
-        screen.getByLabelText(/seleccionar productorx/i),
-      ).toBeInTheDocument(),
+      expect(screen.getByLabelText(/buscar productorx/i)).toBeInTheDocument(),
     );
   });
 });
@@ -86,7 +84,9 @@ describe("ProductorSelector — variant B (CUIT detected, no match)", () => {
       />,
     );
     expect(
-      screen.getByText(/30-99999999-9 no está registrado/i),
+      screen.getByText(
+        /El CUIT 30-99999999-9 fue detectado en el archivo pero no está registrado en trama/i,
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /agregar este productor/i }),
@@ -95,13 +95,11 @@ describe("ProductorSelector — variant B (CUIT detected, no match)", () => {
 });
 
 describe("ProductorSelector — variant C (no detection)", () => {
-  it("renders dropdown without warning", () => {
+  it("renders the combobox without warning", () => {
     render(
       <ProductorSelector detection={null} value={null} onChange={() => {}} />,
     );
-    expect(
-      screen.getByLabelText(/seleccionar productorx/i),
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/buscar productorx/i)).toBeInTheDocument();
     expect(screen.queryByText(/no está registrado/i)).not.toBeInTheDocument();
   });
 
@@ -110,25 +108,26 @@ describe("ProductorSelector — variant C (no detection)", () => {
     render(
       <ProductorSelector detection={null} value={null} onChange={onChange} />,
     );
-    await waitFor(() => {
-      expect(
-        screen.getByRole("option", { name: /Anaranjados/i }),
-      ).toBeInTheDocument();
-    });
-    const select = screen.getByLabelText(/seleccionar productorx/i);
-    fireEvent.change(select, { target: { value: "p2" } });
+    const input = screen.getByLabelText(/buscar productorx/i);
+    fireEvent.focus(input);
+    await waitFor(() =>
+      expect(screen.getByText(/Anaranjados/i)).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByText(/Bionogal/i));
     expect(onChange).toHaveBeenCalledWith("p2");
   });
 
-  it("dropdown has an Agregar un productor row", async () => {
+  it("dropdown has an 'Agregar nuevo productor' row", async () => {
     render(
       <ProductorSelector detection={null} value={null} onChange={() => {}} />,
     );
-    await waitFor(() => {
+    const input = screen.getByLabelText(/buscar productorx/i);
+    fireEvent.focus(input);
+    await waitFor(() =>
       expect(
-        screen.getByRole("option", { name: /\+ Agregar un productor/i }),
-      ).toBeInTheDocument();
-    });
+        screen.getByText(/Agregar nuevo productor/i),
+      ).toBeInTheDocument(),
+    );
   });
 });
 
@@ -165,7 +164,7 @@ describe("ProductorSelector — modal", () => {
         screen.getByRole("dialog", { name: /agregar productorx/i }),
       ).toBeInTheDocument(),
     );
-    fireEvent.change(screen.getByLabelText(/CUIT/i), {
+    fireEvent.change(screen.getByLabelText(/CUIT \(opcional\)/i), {
       target: { value: "30-99999999-9" },
     });
     fireEvent.change(screen.getByLabelText(/nombre/i), {

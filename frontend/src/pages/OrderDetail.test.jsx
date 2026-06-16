@@ -94,11 +94,13 @@ describe("OrderDetail", () => {
     });
     await screen.findByText("tomate");
     expect(screen.getByText("lechuga")).toBeInTheDocument();
-    // Fecha header (DD MMM YYYY in Spanish, e.g. "17 mar 2026")
-    expect(screen.getByText(/17/)).toBeInTheDocument();
-    // Line count
-    const meta = screen.getByText(/cantidad de líneas/i).closest("div");
-    expect(meta).toHaveTextContent("2");
+    // Title with operation date (e.g., "Pedido del 17 mar 2026")
+    expect(
+      screen.getByRole("heading", { name: /pedido del 17/i }),
+    ).toBeInTheDocument();
+    // Stat card "Líneas totales" with value 2
+    const linesStat = screen.getByText(/líneas totales/i).closest("div");
+    expect(linesStat).toHaveTextContent("2");
   });
 
   it("'volver' link navigates to /my-orders", async () => {

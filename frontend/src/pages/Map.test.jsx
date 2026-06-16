@@ -166,7 +166,7 @@ describe("MapPage", () => {
     renderMap();
     await waitFor(() =>
       expect(
-        screen.getByText(/todavía no hay nodxs registradxs/i),
+        screen.getByText(/todavía no hay productorxs ni consumidorxs/i),
       ).toBeInTheDocument(),
     );
   });
