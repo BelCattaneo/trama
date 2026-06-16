@@ -34,6 +34,25 @@ class CreateNodeBody(BaseModel):
     role: Literal["producer", "both"]
 
 
+class MapNodeOut(BaseModel):
+    id: UUID
+    display_name: str
+    role: str
+    latitude: float
+    longitude: float
+    zone_label: str | None
+    orders_last_week: int
+    orders_total: int
+    top_products: list[str]
+
+
+class MapResponse(BaseModel):
+    nodes: list[MapNodeOut]
+
+
+TOP_PRODUCTS_LIMIT = 3
+
+
 router = APIRouter(prefix="/api")
 
 
@@ -64,6 +83,67 @@ async def list_producers(
                 cuit=row[2],
                 role=row[3],
                 zone_label=row[4],
+            )
+            for row in rows
+        ]
+    )
+
+
+@router.get("/map", response_model=MapResponse)
+async def get_map(
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> MapResponse:
+    async with db.cursor() as cur:
+        await cur.execute(
+            """WITH order_stats AS (
+                   SELECT supplier_node_id AS node_id,
+                          COUNT(*) FILTER (
+                              WHERE confirmed_at >= now() - interval '7 days'
+                          ) AS orders_last_week,
+                          COUNT(*) AS orders_total
+                   FROM operation
+                   WHERE supplier_node_id IS NOT NULL
+                   GROUP BY supplier_node_id
+               ),
+               product_ops AS (
+                   SELECT o.supplier_node_id AS node_id,
+                          ol.product,
+                          COUNT(DISTINCT o.id) AS op_count
+                   FROM operation o
+                   JOIN operation_line ol ON ol.operation_id = o.id
+                   WHERE o.supplier_node_id IS NOT NULL
+                   GROUP BY o.supplier_node_id, ol.product
+               ),
+               top AS (
+                   SELECT node_id,
+                          ARRAY_AGG(product ORDER BY op_count DESC, product) AS products
+                   FROM product_ops
+                   GROUP BY node_id
+               )
+               SELECT n.id, n.display_name, n.role, n.latitude, n.longitude,
+                      n.zone_label,
+                      COALESCE(os.orders_last_week, 0),
+                      COALESCE(os.orders_total, 0),
+                      COALESCE(top.products[1:%(top_limit)s], ARRAY[]::text[])
+               FROM node n
+               LEFT JOIN order_stats os ON os.node_id = n.id
+               LEFT JOIN top ON top.node_id = n.id
+               ORDER BY n.display_name""",
+            {"top_limit": TOP_PRODUCTS_LIMIT},
+        )
+        rows = await cur.fetchall()
+    return MapResponse(
+        nodes=[
+            MapNodeOut(
+                id=row[0],
+                display_name=row[1],
+                role=row[2],
+                latitude=row[3],
+                longitude=row[4],
+                zone_label=row[5],
+                orders_last_week=row[6],
+                orders_total=row[7],
+                top_products=list(row[8]),
             )
             for row in rows
         ]
