@@ -123,7 +123,7 @@
 
 .review-page__download {
   background: var(--accent-primary);
-  color: var(--surface-inverse);
+  color: var(--foreground-inverse);
   font-weight: 600;
   padding: 10px 20px;
   border-radius: 8px;
@@ -170,7 +170,7 @@
 
 .review-page__tab--active {
   background: var(--accent-primary);
-  color: var(--surface-inverse);
+  color: var(--foreground-inverse);
   border-color: var(--accent-primary);
 }
 
@@ -257,7 +257,9 @@
 
 .review-page__line {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr auto;
+  grid-template-columns:
+    minmax(220px, 4fr) minmax(80px, 1fr) minmax(90px, 1fr)
+    auto;
   gap: 8px;
   align-items: end;
   padding: 12px;
@@ -290,6 +292,9 @@
   border: 1px solid var(--border-input);
   background: var(--surface-input);
   color: var(--foreground-primary);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .review-page__line-input::placeholder {
@@ -347,22 +352,23 @@
 
 .review-page__confirm {
   background: var(--accent-primary);
-  color: var(--surface-inverse);
+  color: var(--foreground-inverse);
   font-family: var(--font-body);
   font-size: 16px;
   font-weight: 600;
   padding: 14px 28px;
-  border: none;
+  border: 2px solid var(--accent-primary);
   border-radius: 999px;
   cursor: pointer;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
 .review-page__confirm:disabled {
-  background: var(--muted);
-  color: var(--foreground-muted);
+  background: var(--surface-card);
+  color: var(--muted-foreground);
+  border-color: var(--border-default);
   cursor: not-allowed;
-  box-shadow: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
 @media (max-width: 768px) {
