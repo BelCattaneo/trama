@@ -51,26 +51,30 @@ router = APIRouter(prefix="/api/auth")
 
 @router.post("/login")
 async def login(payload: LoginRequest, response: Response):
-    async with db.cursor() as cur:
-        await cur.execute(
-            "SELECT id, password_hash FROM app_user WHERE email = %s",
-            (payload.email,),
-        )
-        row = await cur.fetchone()
+    async with db.pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT id, password_hash FROM app_user WHERE email = %s",
+                (payload.email,),
+            )
+            row = await cur.fetchone()
 
-    if row is None:
-        verify_password(payload.password, _DUMMY_HASH)
-        return JSONResponse({"error": "credenciales inválidas"}, status_code=401)
+            if row is None:
+                verify_password(payload.password, _DUMMY_HASH)
+                return JSONResponse(
+                    {"error": "credenciales inválidas"}, status_code=401
+                )
 
-    user_id, password_hash = row
-    if not verify_password(payload.password, password_hash):
-        return JSONResponse({"error": "credenciales inválidas"}, status_code=401)
+            user_id, password_hash = row
+            if not verify_password(payload.password, password_hash):
+                return JSONResponse(
+                    {"error": "credenciales inválidas"}, status_code=401
+                )
 
-    async with db.cursor() as cur:
-        await cur.execute(
-            "UPDATE app_user SET last_login_at = now() WHERE id = %s",
-            (user_id,),
-        )
+            await cur.execute(
+                "UPDATE app_user SET last_login_at = now() WHERE id = %s",
+                (user_id,),
+            )
 
     session = await create_session(user_id)
     set_session_cookie(response, session.id)
