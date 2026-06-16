@@ -366,3 +366,123 @@ async def test_confirm_rolls_back_on_correction_failure(setup, monkeypatch):
     assert op_count == 0
     assert corr_count == 0
     assert is_winner is False
+
+
+async def _make_producer_node(role="producer", display_name="Productor X"):
+    cuit = f"00-{uuid4().hex[:8]}-x"
+    async with db.pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """INSERT INTO node (cuit, display_name, role, latitude, longitude,
+                                     address_text, zone_label)
+                   VALUES (%s, %s, %s, -34.6, -58.4, 'X', 'CABA')
+                   RETURNING id""",
+                (cuit, display_name, role),
+            )
+            (node_id,) = await cur.fetchone()
+    return node_id
+
+
+async def _delete_node(node_id):
+    async with db.pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("DELETE FROM node WHERE id = %s", (node_id,))
+
+
+@pytest.mark.asyncio
+async def test_confirm_with_supplier_node_id_persists_link(setup):
+    supplier_id = await _make_producer_node()
+    try:
+        body = _good_body(operation_date="2026-02-10")
+        body["supplier_node_id"] = str(supplier_id)
+        async with client() as c:
+            c.cookies.set(COOKIE_NAME, setup["session_id"])
+            response = await c.post(
+                f"/api/documents/{setup['doc_id']}/confirm", json=body
+            )
+        assert response.status_code == 201
+        operation_id = response.json()["operation_id"]
+        async with db.pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT supplier_node_id FROM operation WHERE id = %s",
+                    (operation_id,),
+                )
+                (linked,) = await cur.fetchone()
+        assert linked == supplier_id
+    finally:
+        await _delete_node(supplier_id)
+
+
+@pytest.mark.asyncio
+async def test_confirm_with_role_both_supplier_accepted(setup):
+    supplier_id = await _make_producer_node(role="both")
+    try:
+        body = _good_body()
+        body["supplier_node_id"] = str(supplier_id)
+        async with client() as c:
+            c.cookies.set(COOKIE_NAME, setup["session_id"])
+            response = await c.post(
+                f"/api/documents/{setup['doc_id']}/confirm", json=body
+            )
+        assert response.status_code == 201
+    finally:
+        await _delete_node(supplier_id)
+
+
+@pytest.mark.asyncio
+async def test_confirm_with_consumer_role_supplier_rejected(setup):
+    consumer_id = await _make_producer_node(role="consumer")
+    try:
+        body = _good_body()
+        body["supplier_node_id"] = str(consumer_id)
+        async with client() as c:
+            c.cookies.set(COOKIE_NAME, setup["session_id"])
+            response = await c.post(
+                f"/api/documents/{setup['doc_id']}/confirm", json=body
+            )
+        assert response.status_code == 400
+        assert response.json() == {"error": "el nodo seleccionado no es productor"}
+        async with db.pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT COUNT(*) FROM operation WHERE node_id = %s",
+                    (setup["node_id"],),
+                )
+                (op_count,) = await cur.fetchone()
+        assert op_count == 0
+    finally:
+        await _delete_node(consumer_id)
+
+
+@pytest.mark.asyncio
+async def test_confirm_with_nonexistent_supplier_rejected(setup):
+    body = _good_body()
+    body["supplier_node_id"] = str(uuid4())
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.post(
+            f"/api/documents/{setup['doc_id']}/confirm", json=body
+        )
+    assert response.status_code == 400
+    assert response.json() == {"error": "productor no encontrado"}
+
+
+@pytest.mark.asyncio
+async def test_confirm_without_supplier_node_id_persists_null(setup):
+    body = _good_body()
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.post(
+            f"/api/documents/{setup['doc_id']}/confirm", json=body
+        )
+    assert response.status_code == 201
+    operation_id = response.json()["operation_id"]
+    async with db.pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT supplier_node_id FROM operation WHERE id = %s",
+                (operation_id,),
+            )
+            (linked,) = await cur.fetchone()
+    assert linked is None
