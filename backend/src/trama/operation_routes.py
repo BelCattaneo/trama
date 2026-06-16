@@ -20,6 +20,7 @@ class OperationListItem(BaseModel):
     confirmed_at: datetime
     line_count: int
     source_filename: str | None
+    supplier_display_name: str | None
 
 
 class OperationsListResponse(BaseModel):
@@ -41,6 +42,8 @@ class OperationDetailOut(BaseModel):
     operation_date: date
     confirmed_at: datetime
     document_id: UUID
+    supplier_display_name: str | None
+    supplier_cuit: str | None
     lines: list[OperationLineOut]
 
 
@@ -58,13 +61,15 @@ async def list_operations(
         await cur.execute(
             """SELECT o.id, o.kind, o.operation_date, o.confirmed_at,
                       COUNT(ol.id) AS line_count,
-                      d.original_filename
+                      d.original_filename,
+                      sup.display_name
                FROM operation o
                LEFT JOIN operation_line ol ON ol.operation_id = o.id
                LEFT JOIN parse_attempt pa ON pa.id = o.parse_attempt_id
                LEFT JOIN document d ON d.id = pa.document_id
+               LEFT JOIN node sup ON sup.id = o.supplier_node_id
                WHERE o.node_id = %s
-               GROUP BY o.id, d.original_filename
+               GROUP BY o.id, d.original_filename, sup.display_name
                ORDER BY o.confirmed_at DESC, o.id DESC
                LIMIT %s OFFSET %s""",
             (user.node_id, capped_limit, offset),
@@ -84,6 +89,7 @@ async def list_operations(
                 confirmed_at=r[3],
                 line_count=r[4],
                 source_filename=r[5],
+                supplier_display_name=r[6],
             )
             for r in rows
         ],
@@ -99,9 +105,10 @@ async def get_operation(
     async with db.cursor() as cur:
         await cur.execute(
             """SELECT o.id, o.kind, o.operation_date, o.confirmed_at,
-                      pa.document_id
+                      pa.document_id, sup.display_name, sup.cuit
                FROM operation o
                JOIN parse_attempt pa ON pa.id = o.parse_attempt_id
+               LEFT JOIN node sup ON sup.id = o.supplier_node_id
                WHERE o.id = %s AND o.node_id = %s""",
             (operation_id, user.node_id),
         )
@@ -125,6 +132,8 @@ async def get_operation(
         operation_date=op_row[2],
         confirmed_at=op_row[3],
         document_id=op_row[4],
+        supplier_display_name=op_row[5],
+        supplier_cuit=op_row[6],
         lines=[
             OperationLineOut(
                 line_no=r[0],
@@ -136,6 +145,47 @@ async def get_operation(
             for r in line_rows
         ],
     )
+
+
+class PatchOperationBody(BaseModel):
+    supplier_node_id: UUID | None = None
+
+
+@router.patch("/operations/{operation_id}", status_code=204)
+async def patch_operation(
+    operation_id: UUID,
+    body: PatchOperationBody,
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> Response:
+    async with db.cursor() as cur:
+        await cur.execute(
+            "SELECT id FROM operation WHERE id = %s AND node_id = %s",
+            (operation_id, user.node_id),
+        )
+        if await cur.fetchone() is None:
+            raise HTTPException(
+                status_code=404, detail="operación no encontrada"
+            )
+        if body.supplier_node_id is not None:
+            await cur.execute(
+                "SELECT role FROM node WHERE id = %s",
+                (body.supplier_node_id,),
+            )
+            row = await cur.fetchone()
+            if row is None:
+                raise HTTPException(
+                    status_code=400, detail="productor no encontrado"
+                )
+            if row[0] not in ("producer", "both"):
+                raise HTTPException(
+                    status_code=400,
+                    detail="el nodo seleccionado no es productor",
+                )
+        await cur.execute(
+            "UPDATE operation SET supplier_node_id = %s WHERE id = %s",
+            (body.supplier_node_id, operation_id),
+        )
+    return Response(status_code=204)
 
 
 @router.delete("/operations/{operation_id}", status_code=204)

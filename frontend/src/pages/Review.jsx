@@ -199,7 +199,7 @@ function ReviewLoaded({ documentId, body }) {
     try {
       const response = await apiDelete(`/api/documents/${documentId}`);
       if (response.status === 204) {
-        navigate("/documents", { replace: true });
+        navigate("/my-orders", { replace: true });
         return;
       }
       const errorBody = await response.json().catch(() => ({}));
@@ -215,6 +215,10 @@ function ReviewLoaded({ documentId, body }) {
     <div className="page-shell review-page">
       <NavBarAuth />
       <main className="review-page__content">
+        <header className="review-page__header">
+          <h1 className="review-page__title">Revisá tu pedido</h1>
+          <p className="review-page__subtitle">{document.original_filename}</p>
+        </header>
         <Banners confidence={confidence} isWinner={isWinner} />
 
         {errorMessage && (
@@ -225,21 +229,25 @@ function ReviewLoaded({ documentId, body }) {
         )}
 
         <div className="review-page__split">
-          <section className="review-page__preview">
-            {isPdf && totalPages > 1 && (
-              <PageTabs
-                totalPages={totalPages}
-                activePage={activePage}
-                onChange={setActivePage}
+          <div className="review-page__column">
+            <p className="review-page__column-label">TU DOCUMENTO</p>
+            <section className="review-page__preview">
+              {isPdf && totalPages > 1 && (
+                <PageTabs
+                  totalPages={totalPages}
+                  activePage={activePage}
+                  onChange={setActivePage}
+                />
+              )}
+              <ReviewPreview
+                document={document}
+                activePage={activePage === ALL_PAGES ? 1 : activePage}
               />
-            )}
-            <ReviewPreview
-              document={document}
-              activePage={activePage === ALL_PAGES ? 1 : activePage}
-            />
-          </section>
+            </section>
+          </div>
 
           <section className="review-page__right">
+            <p className="review-page__column-label">LO QUE ENTENDIMOS</p>
             <WarningsPanel
               warnings={visibleWarnings}
               open={warningsOpen}
@@ -339,7 +347,8 @@ function WarningsPanel({ warnings, open, onToggle, hasError }) {
   // Errors render red; everything else is yellow per ticket scheme.
   const severity = hasError ? "error" : "warning";
   const count = warnings.length;
-  const label = count === 1 ? "1 advertencia" : `${count} advertencias`;
+  const label =
+    count === 1 ? "1 cosa para revisar" : `${count} cosas para revisar`;
   return (
     <section className="review-page__warnings">
       <button

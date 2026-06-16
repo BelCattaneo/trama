@@ -29,12 +29,6 @@ function formatDate(value) {
   return dateFormatter.format(date);
 }
 
-function kindLabel(kind) {
-  if (kind === "order") return "pedido";
-  if (kind === "offer") return "oferta";
-  return kind ?? "";
-}
-
 function operationsCountLabel(count) {
   if (count === 1) return "1 pedido confirmado";
   return `${count} pedidos confirmados`;
@@ -131,14 +125,21 @@ export default function MyOrders() {
     <div className="page-shell my-orders-page">
       <NavBarAuth />
       <main className="my-orders-page__content">
-        <header className="my-orders-page__header">
-          <h1 className="my-orders-page__title">Mis pedidos</h1>
-          {state.status === "list" && (
-            <p className="my-orders-page__subtitle">
-              {operationsCountLabel(state.operations.length)}
-            </p>
-          )}
-        </header>
+        {state.status !== "empty" && (
+          <header className="my-orders-page__header">
+            <h1 className="my-orders-page__title">Mis pedidos</h1>
+            <div className="my-orders-page__header-right">
+              {state.status === "list" && (
+                <p className="my-orders-page__subtitle">
+                  {operationsCountLabel(state.operations.length)}
+                </p>
+              )}
+              <Link to="/upload" className="my-orders-page__upload-cta">
+                Subir pedido
+              </Link>
+            </div>
+          </header>
+        )}
 
         {state.status === "loading" && (
           <div
@@ -162,10 +163,19 @@ export default function MyOrders() {
 
         {state.status === "empty" && (
           <div className="my-orders-page__empty">
-            <PackageOpen size={40} aria-hidden="true" />
-            <p>todavía no confirmaste ningún pedido</p>
+            <div className="my-orders-page__empty-icon-circle" aria-hidden="true">
+              <PackageOpen size={28} />
+            </div>
+            <h2 className="my-orders-page__empty-title">
+              Todavía no tenés pedidos
+            </h2>
+            <p className="my-orders-page__empty-desc">
+              Cuando subas una planilla y confirmes las líneas,
+              <br />
+              tus pedidos van a aparecer acá.
+            </p>
             <Link to="/upload" className="my-orders-page__empty-cta">
-              subir documento
+              Subir mi primer pedido
             </Link>
           </div>
         )}
@@ -217,8 +227,8 @@ function OperationsTable({ operations, highlightId, navigate }) {
             <tr>
               <th>Fecha</th>
               <th>Origen</th>
+              <th>Productor</th>
               <th>Líneas</th>
-              <th>Tipo</th>
               <th>Estado</th>
               <th aria-hidden="true" />
             </tr>
@@ -248,8 +258,8 @@ function OperationsTable({ operations, highlightId, navigate }) {
                   <td className="my-orders-page__origen">
                     {op.source_filename || "—"}
                   </td>
+                  <td>{op.supplier_display_name || "—"}</td>
                   <td>{op.line_count}</td>
-                  <td>{kindLabel(op.kind)}</td>
                   <td>
                     <ConfidenceBadge status="confirmed" />
                   </td>
@@ -283,13 +293,15 @@ function OperationsTable({ operations, highlightId, navigate }) {
                   <span>{op.source_filename}</span>
                 </div>
               )}
+              {op.supplier_display_name && (
+                <div className="my-orders-page__card-row">
+                  <span className="my-orders-page__card-label">Productor</span>
+                  <span>{op.supplier_display_name}</span>
+                </div>
+              )}
               <div className="my-orders-page__card-row">
                 <span className="my-orders-page__card-label">Líneas</span>
                 <span>{op.line_count}</span>
-              </div>
-              <div className="my-orders-page__card-row">
-                <span className="my-orders-page__card-label">Tipo</span>
-                <span>{kindLabel(op.kind)}</span>
               </div>
               <Link
                 to={`/my-orders/${op.id}`}

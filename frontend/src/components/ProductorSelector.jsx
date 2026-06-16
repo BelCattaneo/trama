@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Plus, Search, TriangleAlert, X } from "lucide-react";
 import { apiGet, apiPost } from "../lib/api";
 import Button from "./Button";
 import ConfidenceBadge from "./ConfidenceBadge";
@@ -11,7 +12,6 @@ const ROLE_OPTIONS = [
 ];
 
 const DEBOUNCE_MS = 300;
-const ADD_NEW_VALUE = "__add_new__";
 
 export default function ProductorSelector({
   detection,
@@ -20,12 +20,19 @@ export default function ProductorSelector({
   onCreate,
 }) {
   const [overrideMode, setOverrideMode] = useState(false);
+  const [dismissedCuit, setDismissedCuit] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [prefillCuit, setPrefillCuit] = useState("");
+  const [pickedNode, setPickedNode] = useState(null);
 
-  const matched = detection?.matched_node ?? null;
+  const detectionMatched = detection?.matched_node ?? null;
   const detectedCuit = detection?.cuit ?? null;
+  const matched = pickedNode ?? (overrideMode ? null : detectionMatched);
   const showMatchedCard = matched && !overrideMode;
+  const showUnregisteredCard =
+    !showMatchedCard && detectedCuit && !detectionMatched && !dismissedCuit;
+  const isFromDetection =
+    matched && detectionMatched && matched.id === detectionMatched.id;
 
   function openModal(prefill) {
     setPrefillCuit(prefill || "");
@@ -38,8 +45,20 @@ export default function ProductorSelector({
 
   function handleCreated(node) {
     setModalOpen(false);
+    setPickedNode(node);
     onChange(node.id);
     setOverrideMode(false);
+  }
+
+  function handleComboboxPick(node) {
+    setPickedNode(node);
+    onChange(node.id);
+    setOverrideMode(false);
+  }
+
+  function handleChangeClick() {
+    setPickedNode(null);
+    setOverrideMode(true);
   }
 
   return (
@@ -48,46 +67,47 @@ export default function ProductorSelector({
 
       {showMatchedCard && (
         <div className="productor-selector__matched">
-          <div>
+          <div className="productor-selector__matched-info">
             <p className="productor-selector__matched-name">
               {matched.display_name}
             </p>
-            <p className="productor-selector__matched-meta">
-              CUIT {matched.cuit}
-            </p>
+            {matched.cuit && (
+              <p className="productor-selector__matched-meta">
+                CUIT {matched.cuit}
+              </p>
+            )}
           </div>
-          <ConfidenceBadge status="confirmed" label="Detectado del documento" />
-          <button
-            type="button"
-            className="productor-selector__change"
-            onClick={() => setOverrideMode(true)}
-          >
-            Cambiar
-          </button>
+          <div className="productor-selector__matched-right">
+            {isFromDetection && (
+              <ConfidenceBadge
+                status="confirmed"
+                label="Detectado del documento"
+              />
+            )}
+            <button
+              type="button"
+              className="productor-selector__change"
+              onClick={handleChangeClick}
+            >
+              Cambiar
+            </button>
+          </div>
         </div>
       )}
 
-      {!showMatchedCard && detectedCuit && !matched && (
-        <p className="productor-selector__warning" role="alert">
-          El CUIT {detectedCuit} no está registrado en trama.
-        </p>
+      {showUnregisteredCard && (
+        <UnregisteredCuitCard
+          cuit={detectedCuit}
+          onAddNew={() => openModal(detectedCuit)}
+          onDismiss={() => setDismissedCuit(true)}
+        />
       )}
 
-      {!showMatchedCard && (
-        <ProducerDropdown
+      {!showMatchedCard && !showUnregisteredCard && (
+        <ProducerCombobox
           value={value}
-          onChange={onChange}
-          onAddNew={() => openModal(detectedCuit || "")}
-          extraAction={
-            detectedCuit && !matched ? (
-              <Button
-                variant="secondary"
-                onClick={() => openModal(detectedCuit)}
-              >
-                Agregar este productor
-              </Button>
-            ) : null
-          }
+          onPick={handleComboboxPick}
+          onAddNew={() => openModal("")}
         />
       )}
 
@@ -102,12 +122,48 @@ export default function ProductorSelector({
   );
 }
 
-function ProducerDropdown({ value, onChange, onAddNew, extraAction }) {
+function UnregisteredCuitCard({ cuit, onAddNew, onDismiss }) {
+  return (
+    <>
+      <div className="productor-selector__warning-row" role="alert">
+        <TriangleAlert size={14} aria-hidden="true" />
+        <span>
+          El CUIT {cuit} fue detectado en el archivo pero no está registrado en
+          trama
+        </span>
+      </div>
+      <div className="productor-selector__action-row">
+        <div className="productor-selector__cuit-pill">
+          <span>CUIT {cuit}</span>
+          <button
+            type="button"
+            className="productor-selector__cuit-dismiss"
+            onClick={onDismiss}
+            aria-label="Descartar CUIT detectado"
+          >
+            <X size={14} aria-hidden="true" />
+          </button>
+        </div>
+        <button
+          type="button"
+          className="productor-selector__add-btn"
+          onClick={onAddNew}
+        >
+          <Plus size={14} aria-hidden="true" />
+          <span>Agregar este productor</span>
+        </button>
+      </div>
+    </>
+  );
+}
+
+function ProducerCombobox({ value, onPick, onAddNew }) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query), DEBOUNCE_MS);
@@ -117,24 +173,17 @@ function ProducerDropdown({ value, onChange, onAddNew, extraAction }) {
   useEffect(() => {
     let cancelled = false;
     async function fetchProducers() {
-      setLoading(true);
-      setError("");
       try {
         const path = debouncedQuery
           ? `/api/producers?q=${encodeURIComponent(debouncedQuery)}`
           : "/api/producers";
         const response = await apiGet(path);
         if (cancelled) return;
-        if (!response.ok) {
-          setError("No pudimos cargar la lista de productorxs.");
-          return;
-        }
+        if (!response.ok) return;
         const body = await response.json();
         setItems(body.producers || []);
       } catch {
-        if (!cancelled) setError("Error de conexión.");
-      } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setItems([]);
       }
     }
     fetchProducers();
@@ -143,50 +192,105 @@ function ProducerDropdown({ value, onChange, onAddNew, extraAction }) {
     };
   }, [debouncedQuery]);
 
-  function handleSelectChange(event) {
-    const selected = event.target.value;
-    if (selected === ADD_NEW_VALUE) {
-      onAddNew();
-      event.target.value = value || "";
-      return;
+  useEffect(() => {
+    function onClickOutside(event) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
+      ) {
+        setOpen(false);
+      }
     }
-    onChange(selected || null);
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  const totalRows = items.length + 1; // +1 for "Agregar nuevo"
+
+  function pickItem(idx) {
+    if (idx === items.length) {
+      onAddNew();
+    } else {
+      onPick(items[idx]);
+    }
+    setOpen(false);
   }
 
+  function onKeyDown(event) {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setOpen(true);
+      setActiveIndex((i) => Math.min(i + 1, totalRows - 1));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveIndex((i) => Math.max(i - 1, 0));
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      if (open) pickItem(activeIndex);
+      else setOpen(true);
+    } else if (event.key === "Escape") {
+      setOpen(false);
+    }
+  }
+
+  const selectedNode = items.find((p) => p.id === value);
+  const inputValue = selectedNode && !open ? selectedNode.display_name : query;
+
   return (
-    <div className="productor-selector__dropdown">
-      <input
-        type="search"
-        className="productor-selector__search"
-        placeholder="Buscar productorx por nombre o CUIT"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        aria-label="Buscar productorx"
-      />
-      <select
-        className="productor-selector__select"
-        value={value || ""}
-        onChange={handleSelectChange}
-        aria-label="Seleccionar productorx"
-      >
-        <option value="">Seleccionar productorx</option>
-        {items.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.display_name} · {p.cuit}
-          </option>
-        ))}
-        <option value={ADD_NEW_VALUE}>+ Agregar un productor</option>
-      </select>
-      {loading && (
-        <p className="productor-selector__hint">Cargando productorxs…</p>
-      )}
-      {error && (
-        <p className="productor-selector__error" role="alert">
-          {error}
-        </p>
-      )}
-      {extraAction && (
-        <div className="productor-selector__extra-action">{extraAction}</div>
+    <div className="productor-selector__combobox" ref={containerRef}>
+      <div className="productor-selector__combobox-input">
+        <Search
+          size={14}
+          aria-hidden="true"
+          className="productor-selector__combobox-icon"
+        />
+        <input
+          type="text"
+          aria-label="Buscar productorx"
+          placeholder="Buscar productor o agregar uno nuevo"
+          value={inputValue}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+            setActiveIndex(0);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={onKeyDown}
+        />
+      </div>
+      {open && (
+        <ul className="productor-selector__combobox-list" role="listbox">
+          {items.map((p, idx) => (
+            <li
+              key={p.id}
+              role="option"
+              aria-selected={idx === activeIndex}
+              className={
+                idx === activeIndex
+                  ? "productor-selector__combobox-option productor-selector__combobox-option--active"
+                  : "productor-selector__combobox-option"
+              }
+              onMouseEnter={() => setActiveIndex(idx)}
+              onClick={() => pickItem(idx)}
+            >
+              {p.display_name}
+            </li>
+          ))}
+          <li
+            role="option"
+            aria-selected={items.length === activeIndex}
+            className={
+              items.length === activeIndex
+                ? "productor-selector__combobox-add productor-selector__combobox-add--active"
+                : "productor-selector__combobox-add"
+            }
+            onMouseEnter={() => setActiveIndex(items.length)}
+            onClick={() => pickItem(items.length)}
+          >
+            <Plus size={14} aria-hidden="true" />
+            <span>Agregar nuevo productor</span>
+          </li>
+        </ul>
       )}
     </div>
   );
@@ -215,7 +319,7 @@ function AddProductorModal({ prefillCuit, onCancel, onCreated }) {
     setError("");
     try {
       const response = await apiPost("/api/nodes", {
-        cuit,
+        cuit: cuit.trim() || null,
         display_name: displayName,
         address,
         role,
@@ -252,32 +356,49 @@ function AddProductorModal({ prefillCuit, onCancel, onCreated }) {
         ref={dialogRef}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id="productor-modal-title" className="productor-modal__title">
-          Agregar productorx
-        </h2>
+        <div className="productor-modal__top-row">
+          <h2 id="productor-modal-title" className="productor-modal__title">
+            Agregar productorx
+          </h2>
+          <button
+            type="button"
+            className="productor-modal__close"
+            onClick={onCancel}
+            aria-label="Cerrar"
+          >
+            <X size={20} aria-hidden="true" />
+          </button>
+        </div>
         <form onSubmit={handleSubmit} className="productor-modal__form">
           <Input
             id="productor-cuit"
-            label="CUIT"
+            label="CUIT (opcional)"
             value={cuit}
             onChange={(e) => setCuit(e.target.value)}
             placeholder="20-12345678-9"
-            required
           />
           <Input
             id="productor-name"
             label="Nombre o razón social"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
+            placeholder="Ej. Finca El Nogal"
             required
           />
-          <Input
-            id="productor-address"
-            label="Dirección"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            required
-          />
+          <div className="productor-modal__address-group">
+            <Input
+              id="productor-address"
+              label="Dirección"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Calle, localidad, provincia"
+              required
+            />
+            <p className="productor-modal__helper">
+              Trama va a geocodificar esta dirección para ubicar al productorx
+              en el mapa.
+            </p>
+          </div>
           <div className="productor-modal__role-picker">
             <span className="productor-modal__role-label">Rol</span>
             <div role="radiogroup" aria-label="Rol">

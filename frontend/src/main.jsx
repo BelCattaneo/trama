@@ -4,6 +4,7 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import "./styles/tokens.css";
 import "./styles/global.css";
+import "leaflet/dist/leaflet.css";
 import App from "./App.jsx";
 
 const router = createBrowserRouter([

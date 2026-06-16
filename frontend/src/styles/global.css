@@ -15,6 +15,7 @@ body {
   font-family: var(--font-body);
   color: var(--foreground-primary);
   background: var(--surface-primary);
+  overflow-x: hidden;
 }
 
 .page-shell {

@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 28px;
+  gap: 24px;
   padding: 48px 80px;
   color: var(--foreground-primary);
   font-family: var(--font-body);
@@ -11,6 +11,13 @@
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
+}
+
+.upload-page__header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 520px;
 }
 
 .upload-page__title {
@@ -23,18 +30,20 @@
 .upload-page__lead {
   margin: 0;
   color: var(--foreground-secondary);
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .upload-page__drop {
-  min-height: 220px;
+  min-height: 260px;
   background: var(--surface-card);
-  border: 2px dashed var(--border-default);
+  border: 2px solid var(--accent-tertiary);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 20px;
   padding: 24px;
   color: var(--foreground-primary);
 }
@@ -44,33 +53,36 @@
   background: var(--surface-card-hover, var(--surface-card));
 }
 
+.upload-page__drop-icon {
+  color: var(--foreground-muted);
+}
+
 .upload-page__drop-title {
-  margin: 8px 0 0;
-  font-weight: 600;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 500;
 }
 
 .upload-page__drop-sub {
   margin: 0;
-  color: var(--foreground-secondary);
-  font-size: 14px;
+  color: var(--foreground-muted);
+  font-size: 13px;
 }
 
 .upload-page__pick {
-  margin-top: 16px;
-  background: transparent;
-  border: 1px solid var(--accent-primary);
-  color: var(--accent-primary);
+  background: var(--surface-primary);
+  border: 1px solid var(--border-input);
+  color: var(--foreground-primary);
   font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 600;
-  padding: 10px 20px;
-  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 12px 24px;
+  border-radius: 6px;
   cursor: pointer;
 }
 
 .upload-page__pick:hover {
-  background: var(--accent-primary);
-  color: var(--foreground-inverse);
+  background: var(--surface-card-hover, var(--surface-card));
 }
 
 .upload-page__pick:focus-visible {
@@ -84,21 +96,15 @@
 
 .upload-page__formats {
   margin: 0;
-  color: var(--foreground-secondary);
-  font-size: 14px;
-  text-align: center;
-}
-
-.upload-page__privacy-notice {
-  margin: 0;
-  color: var(--foreground-secondary);
+  color: var(--foreground-muted);
   font-size: 13px;
-  text-align: center;
   line-height: 1.5;
+  text-align: center;
 }
 
 .upload-page__privacy-link {
   color: var(--accent-primary);
+  text-decoration: underline;
 }
 
 .upload-page__status {

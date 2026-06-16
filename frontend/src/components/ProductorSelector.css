@@ -1,8 +1,8 @@
 .productor-selector {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px;
+  gap: 10px;
+  padding: 14px 16px;
   background: var(--surface-card);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
@@ -14,85 +14,224 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted-foreground);
+  color: var(--foreground-muted);
 }
+
+/* Variante A — matched node */
 
 .productor-selector__matched {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
+}
+
+.productor-selector__matched-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .productor-selector__matched-name {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  color: var(--foreground);
+  color: var(--foreground-primary);
 }
 
 .productor-selector__matched-meta {
   margin: 0;
-  font-size: 13px;
-  color: var(--muted-foreground);
+  font-size: 12px;
+  color: var(--foreground-muted);
+}
+
+.productor-selector__matched-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .productor-selector__change {
-  margin-left: auto;
-  padding: 0;
   background: transparent;
   border: none;
-  color: var(--accent-primary);
-  text-decoration: underline;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.productor-selector__warning {
-  margin: 0;
-  padding: 10px 12px;
-  background: var(--warning-bg);
-  color: var(--warning-foreground, var(--confidence-medium));
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-.productor-selector__dropdown {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.productor-selector__search,
-.productor-selector__select {
-  padding: 8px 10px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  background: var(--surface-card);
-  font: inherit;
-  color: var(--foreground);
-}
-
-.productor-selector__hint,
-.productor-selector__error {
-  margin: 0;
+  padding: 0;
+  color: var(--accent-secondary);
+  font-family: var(--font-body);
   font-size: 13px;
-  color: var(--muted-foreground);
+  cursor: pointer;
 }
 
-.productor-selector__error {
-  color: var(--error);
+.productor-selector__change:hover {
+  text-decoration: underline;
 }
 
-.productor-selector__extra-action {
+/* Variante B — CUIT detected, no match */
+
+.productor-selector__warning-row {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--warning-bg);
+  color: var(--warning);
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.4;
 }
+
+.productor-selector__action-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.productor-selector__cuit-pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface-input);
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--foreground-primary);
+}
+
+.productor-selector__cuit-dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--foreground-muted);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  margin-left: 8px;
+}
+
+.productor-selector__cuit-dismiss:hover {
+  background: var(--surface-card-hover);
+  color: var(--foreground-primary);
+}
+
+.productor-selector__add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: var(--accent-primary);
+  color: var(--foreground-inverse);
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.productor-selector__add-btn:hover {
+  background: var(--accent-primary-hover, var(--accent-primary));
+}
+
+/* Variante C — combobox (search + dropdown) */
+
+.productor-selector__combobox {
+  position: relative;
+}
+
+.productor-selector__combobox-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--surface-input);
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+}
+
+.productor-selector__combobox-input:focus-within {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: -1px;
+}
+
+.productor-selector__combobox-icon {
+  color: var(--foreground-muted);
+  flex-shrink: 0;
+}
+
+.productor-selector__combobox-input input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--foreground-primary);
+  min-width: 0;
+}
+
+.productor-selector__combobox-input input::placeholder {
+  color: var(--foreground-muted);
+}
+
+.productor-selector__combobox-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--surface-input);
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 20;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.productor-selector__combobox-option {
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--foreground-primary);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.productor-selector__combobox-option--active,
+.productor-selector__combobox-option:hover {
+  background: var(--surface-card-hover);
+}
+
+.productor-selector__combobox-add {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accent-secondary);
+  cursor: pointer;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.productor-selector__combobox-add--active,
+.productor-selector__combobox-add:hover {
+  background: var(--surface-card-hover);
+}
+
+/* Modal */
 
 .productor-modal__backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -101,23 +240,60 @@
 
 .productor-modal {
   background: var(--surface-card);
-  color: var(--foreground);
-  padding: 24px;
+  color: var(--foreground-primary);
+  padding: 32px;
   border-radius: 12px;
   max-width: 480px;
   width: 90%;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.productor-modal__top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
 }
 
 .productor-modal__title {
-  margin: 0 0 16px;
-  font-size: 20px;
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--foreground-primary);
+}
+
+.productor-modal__close {
+  background: transparent;
+  border: none;
+  color: var(--foreground-muted);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 0;
+  border-radius: 4px;
+}
+
+.productor-modal__close:hover {
+  background: var(--surface-card-hover);
+  color: var(--foreground-primary);
 }
 
 .productor-modal__form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+}
+
+.productor-modal__address-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.productor-modal__helper {
+  margin: 0;
+  font-size: 12px;
+  color: var(--foreground-muted);
 }
 
 .productor-modal__error {
@@ -129,32 +305,41 @@
 .productor-modal__actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 12px;
+  margin-top: 8px;
 }
 
 .productor-modal__role-picker {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .productor-modal__role-label {
   font-size: 13px;
-  color: var(--muted-foreground);
+  font-weight: 500;
+  color: var(--foreground-primary);
+}
+
+.productor-modal__role-picker [role="radiogroup"] {
+  display: flex;
+  gap: 8px;
 }
 
 .productor-modal__role {
-  padding: 8px 14px;
-  margin-right: 6px;
+  padding: 8px 20px;
   border: 1px solid var(--border-subtle);
   border-radius: 9999px;
   background: var(--surface-card);
   cursor: pointer;
   font: inherit;
+  font-size: 13px;
+  color: var(--foreground-primary);
 }
 
 .productor-modal__role--selected {
   background: var(--accent-primary);
   color: var(--foreground-inverse);
   border-color: var(--accent-primary);
+  font-weight: 500;
 }

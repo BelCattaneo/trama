@@ -2,13 +2,16 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
+  CheckCircle2,
   Download,
   ExternalLink,
+  ListChecks,
   Loader,
   Trash2,
 } from "lucide-react";
 import NavBarAuth from "../components/NavBarAuth";
-import { apiDelete, apiGet } from "../lib/api";
+import ProductorSelector from "../components/ProductorSelector";
+import { apiDelete, apiGet, apiPatch } from "../lib/api";
 import { buildOperationCsv, buildOperationFilename } from "../lib/csv";
 import "./OrderDetail.css";
 
@@ -32,6 +35,9 @@ export default function OrderDetail() {
   const [state, setState] = useState({ status: "loading" });
   const [toast, setToast] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState(false);
+  const [pendingSupplierId, setPendingSupplierId] = useState(null);
+  const [savingSupplier, setSavingSupplier] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -105,6 +111,35 @@ export default function OrderDetail() {
   const { body } = state;
   const lines = body.lines ?? [];
   const showPageColumn = lines.some((line) => line.page !== null);
+
+  async function onSaveSupplier() {
+    setSavingSupplier(true);
+    setToast("");
+    try {
+      const response = await apiPatch(`/api/operations/${body.id}`, {
+        supplier_node_id: pendingSupplierId,
+      });
+      if (response.status === 204) {
+        setState({
+          ...state,
+          body: { ...body, supplier_display_name: null, supplier_cuit: null },
+        });
+        const refreshed = await apiGet(`/api/operations/${body.id}`);
+        if (refreshed.ok) {
+          const fresh = await refreshed.json();
+          setState({ status: "ready", body: fresh });
+        }
+        setEditingSupplier(false);
+        return;
+      }
+      const errorBody = await response.json().catch(() => ({}));
+      setToast(errorBody.error || "No pudimos guardar el productor.");
+    } catch {
+      setToast("No pudimos guardar el productor.");
+    } finally {
+      setSavingSupplier(false);
+    }
+  }
 
   async function onDelete() {
     if (
@@ -199,17 +234,96 @@ export default function OrderDetail() {
               {toast}
             </div>
           )}
-          <dl className="order-detail__meta">
-            <div className="order-detail__meta-item">
-              <dt>Fecha</dt>
-              <dd>{formatOperationDate(body.operation_date)}</dd>
-            </div>
-            <div className="order-detail__meta-item">
-              <dt>Cantidad de líneas</dt>
-              <dd>{lines.length}</dd>
-            </div>
-          </dl>
+          <h1 className="order-detail__title">
+            Pedido del {formatOperationDate(body.operation_date)}
+          </h1>
         </header>
+
+        <div className="order-detail__stats">
+          <div className="order-detail__stat">
+            <div className="order-detail__stat-icon" aria-hidden="true">
+              <ListChecks size={20} />
+            </div>
+            <div className="order-detail__stat-text">
+              <span className="order-detail__stat-value">{lines.length}</span>
+              <span className="order-detail__stat-label">Líneas totales</span>
+            </div>
+          </div>
+          <div className="order-detail__stat">
+            <div className="order-detail__stat-icon" aria-hidden="true">
+              <CheckCircle2 size={20} />
+            </div>
+            <div className="order-detail__stat-text">
+              <span className="order-detail__stat-value">
+                {formatOperationDate(body.operation_date)}
+              </span>
+              <span className="order-detail__stat-label">Confirmado</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="order-detail__supplier">
+          {!editingSupplier ? (
+            <>
+              <div className="order-detail__supplier-header">
+                <p className="order-detail__supplier-label">
+                  PRODUCTOR DEL PEDIDO
+                </p>
+                <button
+                  type="button"
+                  className="order-detail__supplier-edit"
+                  onClick={() => {
+                    setPendingSupplierId(null);
+                    setEditingSupplier(true);
+                  }}
+                >
+                  {body.supplier_display_name ? "Cambiar" : "Asignar"}
+                </button>
+              </div>
+              {body.supplier_display_name ? (
+                <div className="order-detail__supplier-info">
+                  <p className="order-detail__supplier-name">
+                    {body.supplier_display_name}
+                  </p>
+                  {body.supplier_cuit && (
+                    <p className="order-detail__supplier-cuit">
+                      CUIT {body.supplier_cuit}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="order-detail__supplier-empty">
+                  Este pedido no tiene productor asignado
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <ProductorSelector
+                detection={null}
+                value={pendingSupplierId}
+                onChange={setPendingSupplierId}
+              />
+              <div className="order-detail__supplier-actions">
+                <button
+                  type="button"
+                  className="order-detail__supplier-cancel"
+                  onClick={() => setEditingSupplier(false)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="order-detail__supplier-save"
+                  onClick={onSaveSupplier}
+                  disabled={savingSupplier || !pendingSupplierId}
+                >
+                  Guardar
+                </button>
+              </div>
+            </>
+          )}
+        </div>
 
         <table className="order-detail__table">
           <thead>

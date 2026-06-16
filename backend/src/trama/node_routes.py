@@ -19,7 +19,7 @@ TOP_PRODUCTS_LIMIT = 3
 class ProducerListItem(BaseModel):
     id: UUID
     display_name: str
-    cuit: str
+    cuit: str | None
     role: str
     zone_label: str | None
 
@@ -29,7 +29,7 @@ class ProducersListResponse(BaseModel):
 
 
 class CreateNodeBody(BaseModel):
-    cuit: str
+    cuit: str | None = None
     display_name: str
     address: str
     role: Literal["producer", "both"]
@@ -126,8 +126,15 @@ async def get_map(
                FROM node n
                LEFT JOIN order_stats os ON os.node_id = n.id
                LEFT JOIN top ON top.node_id = n.id
+               WHERE n.id IN (
+                   SELECT node_id FROM operation
+                   UNION
+                   SELECT supplier_node_id FROM operation
+                   WHERE supplier_node_id IS NOT NULL
+               )
+               OR n.id = %(me)s
                ORDER BY n.display_name""",
-            {"top_limit": TOP_PRODUCTS_LIMIT},
+            {"top_limit": TOP_PRODUCTS_LIMIT, "me": user.node_id},
         )
         rows = await cur.fetchall()
     return MapResponse(
@@ -153,7 +160,8 @@ async def create_node(
     body: CreateNodeBody,
     _user: Annotated[AuthUser, Depends(rate_limit_upload)],
 ) -> ProducerListItem | JSONResponse:
-    if not validate_cuit(body.cuit):
+    cuit = body.cuit.strip() if body.cuit else None
+    if cuit and not validate_cuit(cuit):
         return JSONResponse({"error": "CUIT inválido"}, status_code=400)
 
     result = await geocode(body.address)
@@ -170,7 +178,7 @@ async def create_node(
                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                    RETURNING id, display_name, cuit, role, zone_label""",
                 (
-                    body.cuit,
+                    cuit or None,
                     body.display_name,
                     body.role,
                     body.address,
