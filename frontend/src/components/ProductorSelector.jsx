@@ -23,8 +23,8 @@ export default function ProductorSelector({
   const [modalOpen, setModalOpen] = useState(false);
   const [prefillCuit, setPrefillCuit] = useState("");
 
-  const matched = detection?.matched_node || null;
-  const detectedCuit = detection?.cuit || null;
+  const matched = detection?.matched_node ?? null;
+  const detectedCuit = detection?.cuit ?? null;
   const showMatchedCard = matched && !overrideMode;
 
   function openModal(prefill) {

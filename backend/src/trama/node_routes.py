@@ -13,6 +13,7 @@ from trama.rate_limit import rate_limit_upload
 from trama.sessions import AuthUser, require_user
 
 PRODUCER_LIST_LIMIT = 100
+TOP_PRODUCTS_LIMIT = 3
 
 
 class ProducerListItem(BaseModel):
@@ -48,9 +49,6 @@ class MapNodeOut(BaseModel):
 
 class MapResponse(BaseModel):
     nodes: list[MapNodeOut]
-
-
-TOP_PRODUCTS_LIMIT = 3
 
 
 router = APIRouter(prefix="/api")

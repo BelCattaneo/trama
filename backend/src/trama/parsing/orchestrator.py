@@ -118,7 +118,9 @@ async def _run_llm(mime_type: str, contents: bytes, llm_client) -> ParseResult:
     supplier_cuit: str | None = None
 
     multi_page = len(pages) > 1
-    page_label = lambda n: f"[p{n}] " if multi_page else ""  # noqa: E731
+
+    def page_label(n: int) -> str:
+        return f"[p{n}] " if multi_page else ""
 
     for idx, page_bytes in enumerate(pages):
         page_num = idx + 1
