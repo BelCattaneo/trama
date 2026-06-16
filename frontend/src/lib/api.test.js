@@ -71,9 +71,7 @@ describe("api fetch timeout", () => {
   });
 
   it("apiPost sends JSON body and respects timeout override", async () => {
-    globalThis.fetch = vi.fn(() =>
-      Promise.resolve({ ok: true, status: 201 }),
-    );
+    globalThis.fetch = vi.fn(() => Promise.resolve({ ok: true, status: 201 }));
 
     await apiPost("/api/things", { foo: "bar" }, { timeoutMs: 5_000 });
 
