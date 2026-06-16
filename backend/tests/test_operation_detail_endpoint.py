@@ -182,3 +182,73 @@ async def test_response_does_not_include_raw_text(setup):
     assert response.status_code == 200
     for line in response.json()["lines"]:
         assert "raw_text" not in line
+
+
+@pytest.mark.asyncio
+async def test_owner_deletes_operation_cascades_lines_and_clears_winner(setup):
+    async with db.pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "UPDATE parse_attempt SET is_winner = true WHERE id = %s",
+                (setup["attempt_id"],),
+            )
+        await conn.commit()
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.delete(f"/api/operations/{setup['operation_id']}")
+    assert response.status_code == 204
+    async with db.pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT COUNT(*) FROM operation WHERE id = %s",
+                (setup["operation_id"],),
+            )
+            (op_count,) = await cur.fetchone()
+            await cur.execute(
+                "SELECT COUNT(*) FROM operation_line WHERE operation_id = %s",
+                (setup["operation_id"],),
+            )
+            (line_count,) = await cur.fetchone()
+            await cur.execute(
+                "SELECT is_winner FROM parse_attempt WHERE id = %s",
+                (setup["attempt_id"],),
+            )
+            (is_winner,) = await cur.fetchone()
+    assert op_count == 0
+    assert line_count == 0
+    assert is_winner is False
+
+
+@pytest.mark.asyncio
+async def test_delete_operation_unknown_returns_404(setup):
+    async with client() as c:
+        c.cookies.set(COOKIE_NAME, setup["session_id"])
+        response = await c.delete(f"/api/operations/{uuid4()}")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_operation_owned_by_other_returns_404(setup):
+    other = await make_node_with_user()
+    try:
+        async with client() as c:
+            c.cookies.set(COOKIE_NAME, other["session_id"])
+            response = await c.delete(f"/api/operations/{setup['operation_id']}")
+        assert response.status_code == 404
+        async with db.pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT COUNT(*) FROM operation WHERE id = %s",
+                    (setup["operation_id"],),
+                )
+                (op_count,) = await cur.fetchone()
+        assert op_count == 1
+    finally:
+        await cleanup_node(other["node_id"], other["user_id"])
+
+
+@pytest.mark.asyncio
+async def test_delete_operation_unauthenticated_returns_401(setup):
+    async with client() as c:
+        response = await c.delete(f"/api/operations/{setup['operation_id']}")
+    assert response.status_code == 401
