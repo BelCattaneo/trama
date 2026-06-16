@@ -343,6 +343,15 @@
   border-radius: 8px;
 }
 
+.review-page__supplier-warning {
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--warning-bg);
+  color: var(--warning-foreground, var(--confidence-medium));
+  border-radius: 6px;
+  font-size: 13px;
+}
+
 .review-page__footer {
   position: fixed;
   right: 32px;
