@@ -83,6 +83,7 @@ class ConfirmBody(BaseModel):
     lines: list[ConfirmLine]
     corrections: list[ConfirmCorrection] = []
     operation_date: date | None = None
+    supplier_node_id: UUID | None = None
 
 
 _HEIC_BRANDS = (b"heic", b"heix", b"hevc", b"mif1")
@@ -434,24 +435,42 @@ async def confirm_document(
                 original_payload = ParsePayload.model_validate(original_payload_json)
                 diff_payloads(original_payload, body.lines, body.corrections)
 
+            if body.supplier_node_id is not None:
+                await cur.execute(
+                    "SELECT role FROM node WHERE id = %s",
+                    (body.supplier_node_id,),
+                )
+                supplier_row = await cur.fetchone()
+                if supplier_row is None:
+                    raise HTTPException(
+                        status_code=400, detail="productor no encontrado"
+                    )
+                if supplier_row[0] not in ("producer", "both"):
+                    raise HTTPException(
+                        status_code=400,
+                        detail="el nodo seleccionado no es productor",
+                    )
+
             try:
                 async with conn.transaction():
                     await cur.execute(
                         """INSERT INTO operation (node_id, parse_attempt_id, kind,
-                                                  operation_date, status, confirmed_at)
+                                                  operation_date, status,
+                                                  supplier_node_id, confirmed_at)
                            VALUES (%s, %s, 'order',
                                    COALESCE(
                                        %s,
                                        ((SELECT uploaded_at FROM document WHERE id = %s)
                                         AT TIME ZONE 'America/Argentina/Buenos_Aires')::date
                                    ),
-                                   'confirmed', now())
+                                   'confirmed', %s, now())
                            RETURNING id""",
                         (
                             user.node_id,
                             attempt_id,
                             body.operation_date,
                             document_id,
+                            body.supplier_node_id,
                         ),
                     )
                     (operation_id,) = await cur.fetchone()
