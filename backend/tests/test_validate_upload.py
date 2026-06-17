@@ -8,6 +8,24 @@ def test_returns_mime_for_valid_pdf():
     assert _validate_upload(b"%PDF-1.4\n%body\n") == "application/pdf"
 
 
+def test_accepts_pdf_with_leading_newline():
+    # Real PDFs in the wild sometimes prepend whitespace before the %PDF- header.
+    # The spec allows the header anywhere in the first 1024 bytes.
+    assert _validate_upload(b"\n%PDF-1.7\n%body\n") == "application/pdf"
+
+
+def test_accepts_pdf_with_leading_garbage_within_1024_bytes():
+    payload = b"\x00" * 100 + b"%PDF-1.7\n%body\n"
+    assert _validate_upload(payload) == "application/pdf"
+
+
+def test_rejects_pdf_header_beyond_1024_bytes():
+    payload = b"\x00" * 1024 + b"%PDF-1.7\n%body\n"
+    with pytest.raises(HTTPException) as exc:
+        _validate_upload(payload)
+    assert exc.value.detail == "formato no soportado"
+
+
 def test_returns_mime_for_valid_csv():
     assert _validate_upload(b"name,qty\napple,3\n") == "text/csv"
 
