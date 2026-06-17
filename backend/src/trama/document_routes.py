@@ -98,7 +98,8 @@ _HEIC_BRANDS = (b"heic", b"heix", b"hevc", b"mif1")
 
 
 def detect_mime(data: bytes) -> str | None:
-    if data.startswith(b"%PDF-"):
+    # PDF spec allows the %PDF- header anywhere in the first 1024 bytes.
+    if b"%PDF-" in data[:1024]:
         return "application/pdf"
     if data.startswith(b"\xff\xd8\xff"):
         return "image/jpeg"
