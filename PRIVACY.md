@@ -49,7 +49,7 @@ Podés pedirnos:
 - Exportar lo que tenemos sobre tu nodo.
 - Corregir cualquier dato mal cargado.
 
-Para cualquiera de estos pedidos, escribinos a **[admin contact placeholder]**.
+Para cualquiera de estos pedidos, escribinos a **ai@lawal.com.ar**.
 
 ## Cambios a esta política
 

@@ -1,6 +1,6 @@
 # trama — Product Plan
 
-Living document. Sections are added as planning progresses. The repository's `CLAUDE.md` holds project rules; this file holds product scope, personas, user stories, epics, and roadmap.
+> **Historical document.** This file captured the planning done before implementation started. The current state of the system lives in the code, the open issues, and the README. Decisions and scope here are preserved as-is for reference; they may not match what was eventually built.
 
 ---
 
